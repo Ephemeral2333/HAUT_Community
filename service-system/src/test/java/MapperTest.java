@@ -1,4 +1,5 @@
 import com.liyh.system.CommunityApplication;
+import com.liyh.system.mapper.SysDeptMapper;
 import com.liyh.system.mapper.SysUserMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,11 @@ public class MapperTest {
     @Autowired
     private SysUserMapper sysUserMapper;
 
+    @Autowired
+    private SysDeptMapper sysDeptMapper;
+
     @Test
     public void test() {
-        System.out.println(sysUserMapper.selectByUserName("admin"));
+        System.out.println(sysDeptMapper.findAll());
     }
 }

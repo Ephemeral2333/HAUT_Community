@@ -31,6 +31,4 @@ public interface SysMenuService extends IService<SysMenu> {
     void doAssign(AssginMenuVo assginMenuVo);
 
     List<RouterVo> getUserMenuList(Long id);
-
-    List<String> getUserButtonList(Long id);
 }

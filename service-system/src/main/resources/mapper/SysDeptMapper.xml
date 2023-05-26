@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.liyh.system.mapper.SysDeptMapper">
+
+    <resultMap id="sysDeptMap" type="com.liyh.model.system.SysDept" autoMapping="true">
+    </resultMap>
+    <select id="findAll" resultType="com.liyh.model.system.SysDept" resultMap="sysDeptMap">
+        select * from sys_dept where is_deleted = 0 order by sort asc
+    </select>
+</mapper>

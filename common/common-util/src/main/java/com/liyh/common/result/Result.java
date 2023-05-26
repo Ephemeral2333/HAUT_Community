@@ -85,4 +85,9 @@ public class Result<T> {
         this.setCode(code);
         return this;
     }
+
+    public static <T> Result<T> noUser(T data) {
+        Result<T> result = build(data);
+        return build(data, ResultCodeEnum.NO_USER);
+    }
 }

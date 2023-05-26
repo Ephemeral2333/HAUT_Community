@@ -58,14 +58,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         Map<String, Object> result = new HashMap<>();
         // 查询权限
         List<RouterVo> routerVoList =  sysMenuService.getUserMenuList(sysUser.getId());
-        // 查询按钮权限
-        List<String> permsList = sysMenuService.getUserButtonList(sysUser.getId());
 
         result.put("name", username);
         result.put("avatar", "https://oss.aliyuncs.com/aliyun_id_photo_bucket/default_handsome.jpg");
         result.put("roles", "[admin]");
         result.put("routers", routerVoList);
-        result.put("button", permsList);
         return result;
     }
 }

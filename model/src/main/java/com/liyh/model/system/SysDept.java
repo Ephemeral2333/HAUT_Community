@@ -1,5 +1,6 @@
 package com.liyh.model.system;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.liyh.model.base.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -8,6 +9,12 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.util.List;
+
+/**
+ * @Author LiYH
+ * @Description 部门实体类
+ * @Date 22:05 2023/5/26
+ **/
 
 @Data
 @ApiModel(description = "部门")
@@ -24,28 +31,18 @@ public class SysDept extends BaseEntity {
 	@TableField("parent_id")
 	private Long parentId;
 
-	@ApiModelProperty(value = "树结构")
-	@TableField("tree_path")
-	private String treePath;
-
 	@ApiModelProperty(value = "排序")
-	@TableField("sort_value")
-	private Integer sortValue;
+	@TableField(value = "sort")
+	private Integer sort;
 
 	@ApiModelProperty(value = "负责人")
-	@TableField("leader")
-	private String leader;
-
-	@ApiModelProperty(value = "电话")
-	@TableField("phone")
-	private String phone;
+	@TableField("principal")
+	private String principal;
 
 	@ApiModelProperty(value = "状态（1正常 0停用）")
 	@TableField("status")
 	private Integer status;
 
-	@ApiModelProperty(value = "下级部门")
 	@TableField(exist = false)
-	private List<SysDept> children;
-
+	private List<SysDept> higherDeptOptions;
 }

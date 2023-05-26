@@ -37,13 +37,9 @@ public class UserDetailServiceImpl implements UserDetailsService {
         if (sysUser.getStatus() == 0) {
             throw new RuntimeException("账号已被禁用");
         }
-        // 根据用户ID查询用户权限
-        List<String> permission = sysMenuService.getUserButtonList(sysUser.getId());
         // 转换为security的权限集合
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        for (String s : permission) {
-            authorities.add(new SimpleGrantedAuthority(s.trim()));
-        }
+        authorities.add(new SimpleGrantedAuthority("ROLE_admin"));
         return new CustomUser(sysUser, authorities);
     }
 }

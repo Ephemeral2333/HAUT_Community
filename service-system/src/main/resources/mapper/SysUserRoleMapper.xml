@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.liyh.system.mapper.SysUserRoleMapper">
+
+    <resultMap id="SysUserMap" type="com.liyh.model.system.SysRole" autoMapping="true">
+    </resultMap>
+    <select id="selectRoleByUserName" resultType="com.liyh.model.system.SysRole" resultMap="SysUserMap">
+        select * from sys_role r left join sys_user_role ur on r.id = ur.role_id where ur.user_id = (select id from sys_user where username = #{username} and is_deleted = 0)
+    </select>
+</mapper>

@@ -4,20 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.liyh.common.utils.MD5;
+import com.liyh.model.system.SysRole;
 import com.liyh.model.system.SysUser;
-import com.liyh.model.vo.RouterVo;
+import com.liyh.model.system.SysUserRole;
 import com.liyh.model.vo.SysUserQueryVo;
 import com.liyh.system.mapper.SysUserMapper;
-import com.liyh.system.service.SysMenuService;
+import com.liyh.system.mapper.SysUserRoleMapper;
 import com.liyh.system.service.SysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Transactional
 @Service
@@ -28,7 +28,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private SysUserMapper sysUserMapper;
 
     @Autowired
-    private SysMenuService sysMenuService;
+    private SysUserRoleMapper sysUserRoleMapper;
 
     @Override
     public IPage<SysUser> selectPage(Page<SysUser> pageParam, SysUserQueryVo userQueryVo) {
@@ -44,25 +44,45 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     public SysUser getByUsername(String username) {
-//        QueryWrapper<SysUser> queryWrapper = new QueryWrapper<>();
-//        queryWrapper.eq("username", username);
-//        return sysUserMapper.selectOne(queryWrapper);
         return sysUserMapper.selectByUserName(username);
     }
 
     @Override
-    public Map<String, Object> getUserInfo(String username) {
-        // 根据用户名查询用户信息
-        SysUser sysUser = this.getByUsername(username);
-        log.info("sysUser: " + sysUser);
-        Map<String, Object> result = new HashMap<>();
-        // 查询权限
-        List<RouterVo> routerVoList =  sysMenuService.getUserMenuList(sysUser.getId());
+    public void resetPassword(Long id) {
+        SysUser sysUser = sysUserMapper.selectById(id);
+        sysUser.setPassword(MD5.encrypt("111111"));
+        sysUserMapper.updateById(sysUser);
+    }
 
-        result.put("name", username);
-        result.put("avatar", "https://oss.aliyuncs.com/aliyun_id_photo_bucket/default_handsome.jpg");
-        result.put("roles", "[admin]");
-        result.put("routers", routerVoList);
-        return result;
+    /**
+     * @Author LiYH
+     * @Description 分配角色
+     * @Date 16:06 2023/6/5
+     * @Param [userId, roleIds]
+     * @return void
+     **/
+    @Override
+    public void doAssign(String userid, List<Long> roleIds) {
+        QueryWrapper<SysUserRole> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userid);
+        sysUserRoleMapper.delete(queryWrapper);
+        for (Long roleId: roleIds) {
+            SysUserRole sysUserRole = new SysUserRole();
+            sysUserRole.setUserId(String.valueOf(userid));
+            sysUserRole.setRoleId(String.valueOf(roleId));
+            sysUserRoleMapper.insert(sysUserRole);
+        }
+    }
+
+    @Override
+    public void deleteRoleUserByUserId(Long id) {
+        QueryWrapper<SysUserRole> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", id);
+        sysUserRoleMapper.delete(queryWrapper);
+    }
+
+    @Override
+    public void updateByUserId(SysUser user) {
+        sysUserMapper.updateByEntity(user);
     }
 }

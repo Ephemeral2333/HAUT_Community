@@ -6,9 +6,17 @@
 
 <mapper namespace="com.liyh.system.mapper.SysDeptMapper">
 
+    <resultMap id="forUser" type="com.liyh.model.system.SysDept">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+    </resultMap>
+
     <resultMap id="sysDeptMap" type="com.liyh.model.system.SysDept" autoMapping="true">
     </resultMap>
     <select id="findAll" resultType="com.liyh.model.system.SysDept" resultMap="sysDeptMap">
         select * from sys_dept where is_deleted = 0 order by sort asc
+    </select>
+    <select id="selectByPKForUser" resultType="com.liyh.model.system.SysDept" resultMap="forUser">
+        select * from sys_dept where id = #{id} and is_deleted = 0
     </select>
 </mapper>

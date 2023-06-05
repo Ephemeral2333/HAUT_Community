@@ -6,6 +6,11 @@
 <mapper namespace="com.liyh.system.mapper.SysUserMapper">
 
     <resultMap id="SysUserMap" type="com.liyh.model.system.SysUser" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="deptId" column="dept_id"/>
+        <association property="sysDept" column="dept_id" select="com.liyh.system.mapper.SysDeptMapper.selectByPKForUser"/>
+        <collection property="roleList" column="username" select="com.liyh.system.mapper.SysUserRoleMapper.selectRoleByUserName"/>
     </resultMap>
 
     <resultMap id="includeRoles" type="com.liyh.model.system.SysUser" autoMapping="true">
@@ -18,25 +23,26 @@
 
     <!-- 用于select查询公用抽取的列 -->
     <sql id="columns">
-        id,username,password,name,phone,head_url,post_id,dept_id,description,status,create_time,update_time,is_deleted
+        id,username,password,nickname,email,sex,head_url,dept_id,description,status,create_time,update_time,is_deleted
     </sql>
+    <update id="updateByEntity">
+        update sys_user set username = #{username}, email = #{email}, dept_id = #{deptId}, sex = #{sex}, description = #{description}, update_time = NOW()
+        where id = #{id}
+    </update>
 
     <select id="selectPage" resultMap="SysUserMap">
         select <include refid="columns" />
         from sys_user
         <where>
-            <if test="vo.keyword != null and vo.keyword != ''">
-                and (username like CONCAT('%',#{vo.keyword},'%') or  name like CONCAT('%',#{vo.keyword},'%') or phone like CONCAT('%',#{vo.keyword},'%'))
+            <if test="vo.username != null and vo.username != ''">
+                and username like CONCAT('%',#{vo.username},'%')
             </if>
-            <if test="vo.createTimeBegin != null and vo.createTimeBegin != ''">
-                and create_time >= #{vo.createTimeBegin}
-            </if>
-            <if test="vo.createTimeEnd != null and vo.createTimeEnd != ''">
-                and create_time &lt;= #{vo.createTimeEnd}
+            <if test="vo.deptId != null and vo.deptId != ''">
+                and dept_id = #{vo.deptId}
             </if>
             and is_deleted = 0
         </where>
-        order by id desc
+        order by id
     </select>
     <select id="selectByUserName" resultType="com.liyh.model.system.SysUser" resultMap="includeRoles">
         select *

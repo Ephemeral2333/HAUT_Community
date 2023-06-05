@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.vo.SysUserQueryVo;
 
+import java.util.List;
 import java.util.Map;
 
 public interface SysUserService extends IService<SysUser> {
@@ -14,5 +15,11 @@ public interface SysUserService extends IService<SysUser> {
 
     SysUser getByUsername(String username);
 
-    Map<String, Object> getUserInfo(String username);
+    void resetPassword(Long id);
+
+    void doAssign(String userid, List<Long> roleIds);
+
+    void deleteRoleUserByUserId(Long id);
+
+    void updateByUserId(SysUser user);
 }

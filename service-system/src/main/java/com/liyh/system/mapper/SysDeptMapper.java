@@ -14,4 +14,7 @@ import java.util.List;
 @Mapper
 public interface SysDeptMapper extends BaseMapper<SysDept> {
     List<SysDept> findAll();
+
+    // 根据id查询部门信息，但只提供ID和Name
+    SysDept selectByPKForUser(Long id);
 }

@@ -13,4 +13,6 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     IPage<SysUser> selectPage(Page<SysUser> page, @Param("vo") SysUserQueryVo userQueryVo);
 
     SysUser selectByUserName(String username);
+
+    void updateByEntity(SysUser user);
 }

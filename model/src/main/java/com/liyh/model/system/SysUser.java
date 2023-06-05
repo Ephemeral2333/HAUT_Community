@@ -26,12 +26,16 @@ public class SysUser extends BaseEntity {
 	private String password;
 
 	@ApiModelProperty(value = "姓名")
-	@TableField("name")
-	private String name;
+	@TableField("nickname")
+	private String nickname;
 
-	@ApiModelProperty(value = "手机")
-	@TableField("phone")
-	private String phone;
+	@ApiModelProperty(value = "邮箱")
+	@TableField("email")
+	private String email;
+
+	@ApiModelProperty(value = "性别")
+	@TableField("sex")
+	private int sex;
 
 	@ApiModelProperty(value = "头像地址")
 	@TableField("head_url")
@@ -40,10 +44,6 @@ public class SysUser extends BaseEntity {
 	@ApiModelProperty(value = "部门id")
 	@TableField("dept_id")
 	private Long deptId;
-
-	@ApiModelProperty(value = "岗位id")
-	@TableField("post_id")
-	private Long postId;
 
 	@ApiModelProperty(value = "描述")
 	@TableField("description")
@@ -55,11 +55,18 @@ public class SysUser extends BaseEntity {
 
 	@TableField(exist = false)
 	private List<SysRole> roleList;
-	//岗位
+
 	@TableField(exist = false)
-	private String postName;
-	//部门
+	private SysDept sysDept;
+
 	@TableField(exist = false)
-	private String deptName;
+	private List<SysMenu> higherDeptOptions;
+
+	@ApiModelProperty(value = "传输过来的部门ID")
+	@TableField(exist = false)
+	private Long parentId;
+
+	@TableField(exist = false)
+	private List<Long> roleIds;
 }
 

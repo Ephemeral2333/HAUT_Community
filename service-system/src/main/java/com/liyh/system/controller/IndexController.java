@@ -42,6 +42,7 @@ public class IndexController {
     public Result login(@RequestBody LoginVo loginVo) {
         // 根据用户名查询数据库
         SysUser sysUser = sysUserService.getByUsername(loginVo.getUsername());
+        log.info("sysUser:{}", sysUser);
         if (null == sysUser) {
             throw new AuthException(ResultCodeEnum.ACCOUNT_ERROR);
         }
@@ -54,23 +55,6 @@ public class IndexController {
 
         Map<String, Object> map = new HashMap<>();
         map.put("token", JwtHelper.createToken(String.valueOf(sysUser.getId()), sysUser.getUsername()));
-        return Result.ok(map);
-    }
-
-    /**
-     * @return
-     * @Author LiYH
-     * @Description Info
-     * @Date 17:38 2023/5/9
-     * @Param
-     **/
-    @GetMapping("/info")
-    public Result info(HttpServletRequest request) {
-        String token = request.getHeader("token");
-        String username = JwtHelper.getUsername(token);
-        log.info("username: " + username);
-        // 获取用户信息
-        Map<String, Object> map = sysUserService.getUserInfo(username);
         return Result.ok(map);
     }
 }

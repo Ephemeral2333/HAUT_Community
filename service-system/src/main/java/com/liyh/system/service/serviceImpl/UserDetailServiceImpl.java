@@ -2,7 +2,6 @@ package com.liyh.system.service.serviceImpl;
 
 import com.liyh.model.system.SysUser;
 import com.liyh.system.custom.CustomUser;
-import com.liyh.system.service.SysMenuService;
 import com.liyh.system.service.SysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,7 +11,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,9 +22,6 @@ import java.util.List;
 public class UserDetailServiceImpl implements UserDetailsService {
     @Autowired
     private SysUserService sysUserService;
-
-    @Autowired
-    private SysMenuService sysMenuService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

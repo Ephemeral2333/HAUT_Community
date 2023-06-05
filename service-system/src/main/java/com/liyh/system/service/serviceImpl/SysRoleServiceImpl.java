@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liyh.model.system.SysUserRole;
-import com.liyh.model.vo.AssginRoleVo;
 import com.liyh.model.vo.SysRoleQueryVo;
 import com.liyh.system.mapper.SysRoleMapper;
 import com.liyh.system.mapper.SysUserRoleMapper;
@@ -53,24 +52,6 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         returnMap.put("allRoles", roles);
         returnMap.put("userRoleIds", userRoleIds);
         return returnMap;
-    }
-
-    @Override
-    public void doAssign(AssginRoleVo assginRoleVo) {
-        //根据用户id删除原来分配的角色
-        QueryWrapper<SysUserRole> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("user_id", assginRoleVo.getUserId());
-        sysUserRoleMapper.delete(queryWrapper);
-        //获取所有的角色id
-        List<String> roleIdList = assginRoleVo.getRoleIdList();
-        for (String roleId : roleIdList) {
-            if (roleId != null) {
-                SysUserRole sysUserRole = new SysUserRole();
-                sysUserRole.setUserId(assginRoleVo.getUserId());
-                sysUserRole.setRoleId(roleId);
-                sysUserRoleMapper.insert(sysUserRole);
-            }
-        }
     }
 
     @Override

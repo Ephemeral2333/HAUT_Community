@@ -1,6 +1,5 @@
 package com.liyh.system.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.liyh.common.result.Result;
 import com.liyh.model.system.SysDept;
 import com.liyh.model.system.SysUser;

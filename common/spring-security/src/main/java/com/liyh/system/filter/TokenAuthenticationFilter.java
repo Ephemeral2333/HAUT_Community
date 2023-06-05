@@ -44,6 +44,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
             return;
         }
+        // 如果是前台接口，直接放行
+//        if(request.getRequestURI().contains("/front/")) {
+//            chain.doFilter(request, response);
+//            return;
+//        }
 
         UsernamePasswordAuthenticationToken authentication = getAuthentication(request);
         if (null != authentication) {

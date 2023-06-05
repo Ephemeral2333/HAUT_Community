@@ -4,8 +4,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
 import com.liyh.model.system.SysRole;
-import com.liyh.model.vo.AssginRoleVo;
-import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.SysRoleQueryVo;
 import com.liyh.system.service.SysRoleService;
 import io.swagger.annotations.Api;
@@ -88,12 +86,5 @@ public class SysRoleController {
     public Result toAssign(@PathVariable Long userId) {
         Map<String, Object> roleMap = sysRoleService.getRolesByUserId(userId);
         return Result.ok(roleMap);
-    }
-
-    @ApiOperation(value = "根据用户分配角色")
-    @PostMapping("/doAssign")
-    public Result doAssign(@RequestBody AssginRoleVo assginRoleVo) {
-        sysRoleService.doAssign(assginRoleVo);
-        return Result.ok();
     }
 }

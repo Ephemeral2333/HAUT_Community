@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.liyh.system.mapper.FollowMapper">
+    <sql id="columns">
+        id,parent_id,follower_id,is_deleted
+    </sql>
+    <insert id="follow">
+        insert into follow (parent_id, follower_id) values (#{parentId}, #{userId})
+    </insert>
+    <delete id="unfollow">
+        delete from follow where parent_id = #{parentId} and follower_id = #{userId}
+    </delete>
+    <select id="isFollow" resultType="java.lang.Integer">
+        select count(*) from follow where parent_id = #{id} and follower_id = #{userId}
+    </select>
+
+</mapper>

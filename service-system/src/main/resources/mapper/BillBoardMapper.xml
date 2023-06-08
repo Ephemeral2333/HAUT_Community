@@ -5,5 +5,32 @@
 
 
 <mapper namespace="com.liyh.system.mapper.BillBoardMapper">
+    <resultMap id="includeUser" type="com.liyh.model.entity.Billboard" autoMapping="true">
+        <id property="id" column="id"/>
+    </resultMap>
 
+    <sql id="columns">
+        id,content,create_time,update_time,is_deleted
+    </sql>
+    <update id="update">
+        update billboard
+        <set>
+            content = #{content},
+            update_time = now()
+        </set>
+        where id = #{id}
+    </update>
+
+
+    <select id="selectOrderByTime" resultType="com.liyh.model.entity.Billboard" resultMap="includeUser">
+        select * from billboard where is_deleted = 0 order by update_time desc limit 1
+    </select>
+    <select id="selectPage" resultType="com.liyh.model.entity.Billboard" resultMap="includeUser">
+        select <include refid="columns" />
+        from billboard
+        <where>
+            is_deleted = 0
+        </where>
+        order by update_time desc
+    </select>
 </mapper>

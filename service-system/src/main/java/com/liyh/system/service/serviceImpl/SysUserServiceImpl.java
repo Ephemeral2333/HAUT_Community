@@ -8,7 +8,9 @@ import com.liyh.common.utils.MD5;
 import com.liyh.model.system.SysRole;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.system.SysUserRole;
+import com.liyh.model.vo.RegisterVo;
 import com.liyh.model.vo.SysUserQueryVo;
+import com.liyh.model.vo.UserVo;
 import com.liyh.system.mapper.SysUserMapper;
 import com.liyh.system.mapper.SysUserRoleMapper;
 import com.liyh.system.service.SysUserService;
@@ -84,5 +86,26 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public void updateByUserId(SysUser user) {
         sysUserMapper.updateByEntity(user);
+    }
+
+    @Override
+    public SysUser getByEmail(String email) {
+        return sysUserMapper.selectByEmail(email);
+    }
+
+    @Override
+    public void register(RegisterVo registerVo) {
+        registerVo.setPass(MD5.encrypt(registerVo.getPass()));
+        SysUser sysUser = new SysUser();
+        sysUser.setUsername(registerVo.getUsername());
+        sysUser.setPassword(registerVo.getPass());
+        sysUser.setEmail(registerVo.getEmail());
+        sysUser.setNickname(registerVo.getUsername());
+        sysUserMapper.insert(sysUser);
+    }
+
+    @Override
+    public UserVo getUserInfo(Long id) {
+        return sysUserMapper.getFrontInfo(id);
     }
 }

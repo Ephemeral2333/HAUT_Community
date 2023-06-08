@@ -21,6 +21,14 @@
         <collection property="roleList" column="username" select="com.liyh.system.mapper.SysUserRoleMapper.selectRoleByUserName"/>
     </resultMap>
 
+    <resultMap id="frontInfo" type="com.liyh.model.vo.UserVo" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="headUrl" column="head_url"/>
+        <association property="sysDept" column="dept_id" select="com.liyh.system.mapper.SysDeptMapper.selectByPKForUser"/>
+        <collection property="sysRoleList" column="username" select="com.liyh.system.mapper.SysUserRoleMapper.selectRoleByUserName"/>
+    </resultMap>
+
     <!-- 用于select查询公用抽取的列 -->
     <sql id="columns">
         id,username,password,nickname,email,sex,head_url,dept_id,description,status,create_time,update_time,is_deleted
@@ -49,5 +57,22 @@
         from sys_user
         where username = #{username}
         and is_deleted = 0
+    </select>
+    <select id="selectByEmail" resultType="com.liyh.model.system.SysUser">
+        select *
+        from sys_user
+        where email = #{email}
+        and is_deleted = 0
+    </select>
+    <select id="getFrontInfo" resultType="com.liyh.model.vo.UserVo" resultMap="frontInfo">
+        select * from sys_user where id = #{id}
+    </select>
+    <select id="selectById" resultType="com.liyh.model.system.SysUser">
+        select *
+        from sys_user
+        where id = #{id}
+    </select>
+    <select id="getNameById" resultType="java.lang.String">
+        select username from sys_user where id = #{id}
     </select>
 </mapper>

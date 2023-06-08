@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.liyh.model.system.SysUser;
+import com.liyh.model.vo.RegisterVo;
 import com.liyh.model.vo.SysUserQueryVo;
+import com.liyh.model.vo.UserVo;
 
 import java.util.List;
 import java.util.Map;
@@ -22,4 +24,10 @@ public interface SysUserService extends IService<SysUser> {
     void deleteRoleUserByUserId(Long id);
 
     void updateByUserId(SysUser user);
+
+    SysUser getByEmail(String email);
+
+    void register(RegisterVo registerVo);
+
+    UserVo getUserInfo(Long id);
 }

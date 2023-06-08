@@ -15,7 +15,7 @@ import java.util.Date;
 
 public class JwtHelper {
 
-    private static long tokenExpiration = 60 * 60 * 1000;   // 有效期5分钟
+    private static long tokenExpiration = 24 * 60 * 60 * 1000;   // 有效期60分钟
     private static String tokenSignKey = "liyh";   // 我的签名私钥
 
     // 生成Token

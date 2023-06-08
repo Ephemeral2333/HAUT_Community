@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.vo.SysUserQueryVo;
+import com.liyh.model.vo.UserVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,4 +16,10 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     SysUser selectByUserName(String username);
 
     void updateByEntity(SysUser user);
+
+    SysUser selectByEmail(String email);
+
+    UserVo getFrontInfo(Long id);
+
+    String getNameById(Long id);
 }

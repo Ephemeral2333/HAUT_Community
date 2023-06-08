@@ -1,14 +1,18 @@
 package com.liyh.system.controller;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
 import com.liyh.common.utils.MD5;
+import com.liyh.common.utils.VCodeUtil;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.SysRoleQueryVo;
 import com.liyh.model.vo.SysUserQueryVo;
+import com.liyh.system.service.EmailService;
 import com.liyh.system.service.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,8 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.net.http.HttpRequest;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Api(tags = "用户管理")

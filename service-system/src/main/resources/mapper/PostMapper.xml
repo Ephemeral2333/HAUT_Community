@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.liyh.system.mapper.PostMapper">
+    <resultMap id="includeUser" type="com.liyh.model.entity.Post" autoMapping="true">
+        <id column="id" property="id"/>
+        <association property="author" column="user_id" select="com.liyh.system.mapper.SysUserMapper.getFrontInfo"/>
+        <collection property="tags" column="id" select="com.liyh.system.mapper.TagMapper.selectTagsByPostId"/>
+    </resultMap>
+
+    <sql id="columns">
+        id,title,content,user_id,comments,collects,favor,view,top,essence,section_id,create_time,update_time,is_deleted
+    </sql>
+
+    <select id="selectPage" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        <where>
+            is_deleted = 0
+        </where>
+        order by top desc, create_time desc
+    </select>
+    <select id="selectPageByHot" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        <where>
+            is_deleted = 0
+        </where>
+        order by top desc, view desc, create_time desc
+    </select>
+    <select id="selectPageByTime" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        <where>
+            is_deleted = 0
+        </where>
+        order by top desc, update_time desc
+    </select>
+    <select id="selectByPk" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select * from post where id = #{id}
+    </select>
+</mapper>

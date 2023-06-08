@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.liyh.system.mapper.TipMapper">
+    <sql id="columns">
+        id,content,user,author,is_deleted,create_time,update_time
+    </sql>
+
+    <select id="getRandomTip" resultType="com.liyh.model.entity.Tip">
+        select * from tip order by rand() limit 1
+    </select>
+    <select id="selectPage" resultType="com.liyh.model.entity.Tip">
+        select <include refid="columns" />
+        from tip
+        <where>
+            is_deleted = 0
+        </where>
+        order by id
+    </select>
+</mapper>

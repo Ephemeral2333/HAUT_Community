@@ -4,19 +4,27 @@ import com.liyh.common.result.Result;
 import com.liyh.common.result.ResultCodeEnum;
 import com.liyh.common.utils.JwtHelper;
 import com.liyh.common.utils.MD5;
+import com.liyh.common.utils.VCodeUtil;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.vo.LoginVo;
+import com.liyh.model.vo.RegisterVo;
+import com.liyh.model.vo.UserVo;
 import com.liyh.system.exception.AuthException;
+import com.liyh.system.service.EmailService;
 import com.liyh.system.service.SysUserService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Author LiYH
@@ -30,6 +38,12 @@ import java.util.Objects;
 public class IndexController {
     @Autowired
     private SysUserService sysUserService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     /**
      * @return
@@ -56,5 +70,49 @@ public class IndexController {
         Map<String, Object> map = new HashMap<>();
         map.put("token", JwtHelper.createToken(String.valueOf(sysUser.getId()), sysUser.getUsername()));
         return Result.ok(map);
+    }
+
+    @ApiOperation(value = "注册")
+    @PostMapping("/register")
+    public Result register(@RequestBody RegisterVo registerVo) throws Exception {
+        if (sysUserService.getByUsername(registerVo.getUsername()) != null) {
+            return Result.alreadyUserName();
+        }
+        String code = redisTemplate.opsForValue().get(registerVo.getEmail() + "verify");
+        if (!code.equals(registerVo.getCode())) {
+            return Result.verifyError();
+        }
+        sysUserService.register(registerVo);
+        return Result.ok();
+    }
+
+    @ApiOperation(value = "发送邮箱验证码")
+    @GetMapping("sendCode")
+    public Result sendCode(@RequestParam String email) {
+        if (sysUserService.getByEmail(email) != null) {
+            return Result.alreadyEmail();
+        }
+        log.info(email);
+        String verifyCode = VCodeUtil.verifyCode(6);
+        redisTemplate.opsForValue().set(email + "verify", verifyCode, 5 * 60, TimeUnit.SECONDS);
+        log.info(verifyCode);
+        emailService.sendEmail(email, verifyCode);
+        return Result.ok();
+    }
+
+    @ApiOperation("获取用户信息")
+    @GetMapping("/info")
+    public Result<UserVo> info(HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        UserVo sysUser = sysUserService.getUserInfo(Long.parseLong(userId));
+        return Result.ok(sysUser);
+    }
+
+    @ApiOperation("退出登录")
+    @PostMapping("/logout")
+    public Result logout(HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        redisTemplate.delete(userId);
+        return Result.ok();
     }
 }

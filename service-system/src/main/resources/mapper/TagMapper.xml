@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.liyh.system.mapper.TagMapper">
+    <sql id="columns">
+        id,name,topic_count,is_deleted
+    </sql>
+    <insert id="createTopicTag">
+        insert into post_tag(topic_id,tag_id) values(#{post},#{tag})
+    </insert>
+    <delete id="deleteByTopicId">
+        delete from post_tag where topic_id = #{topicId}
+    </delete>
+    <select id="selectTagsByPostId" resultType="com.liyh.model.entity.Tag">
+        select
+        *
+        from tag
+        where id in (
+        select tag_id from post_tag where topic_id = #{id}
+        )
+    </select>
+
+
+</mapper>

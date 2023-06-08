@@ -90,4 +90,16 @@ public class Result<T> {
         Result<T> result = build(data);
         return build(data, ResultCodeEnum.NO_USER);
     }
+
+    public static <T> Result<T> alreadyUserName() {
+        return build(null, ResultCodeEnum.ALREADY_USER);
+    }
+
+    public static <T> Result<T> alreadyEmail() {
+        return build(null, ResultCodeEnum.ALREADY_EMAIL);
+    }
+
+    public static <T> Result<T> verifyError() {
+        return build(null, ResultCodeEnum.VERIFY_ERROR);
+    }
 }

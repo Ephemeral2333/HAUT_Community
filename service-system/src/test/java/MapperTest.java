@@ -1,4 +1,5 @@
 import com.liyh.system.CommunityApplication;
+import com.liyh.system.mapper.BillBoardMapper;
 import com.liyh.system.mapper.SysDeptMapper;
 import com.liyh.system.mapper.SysUserMapper;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,11 @@ public class MapperTest {
     @Autowired
     private SysDeptMapper sysDeptMapper;
 
+    @Autowired
+    private BillBoardMapper billBoardMapper;
+
     @Test
     public void test() {
-        System.out.println(sysDeptMapper.findAll());
+
     }
 }

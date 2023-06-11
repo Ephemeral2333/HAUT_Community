@@ -25,8 +25,13 @@
         <id property="id" column="id"/>
         <result property="username" column="username"/>
         <result property="headUrl" column="head_url"/>
-        <association property="sysDept" column="dept_id" select="com.liyh.system.mapper.SysDeptMapper.selectByPKForUser"/>
-        <collection property="sysRoleList" column="username" select="com.liyh.system.mapper.SysUserRoleMapper.selectRoleByUserName"/>
+        <association property="topicCount" column="id" select="com.liyh.system.mapper.PostMapper.selectCountByUserId"/>
+        <association property="followerCount" column="id"
+                     select="com.liyh.system.mapper.FollowMapper.selectFollowerCountByUserId"/>
+        <association property="sysDept" column="dept_id"
+                     select="com.liyh.system.mapper.SysDeptMapper.selectByPKForUser"/>
+        <collection property="sysRoleList" column="username"
+                    select="com.liyh.system.mapper.SysUserRoleMapper.selectRoleByUserName"/>
     </resultMap>
 
     <!-- 用于select查询公用抽取的列 -->

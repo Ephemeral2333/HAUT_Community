@@ -26,4 +26,6 @@ public class UserVo implements Serializable {
     private String description;
     private List<SysRole> sysRoleList;
     private SysDept sysDept;
+    private Integer topicCount;
+    private Integer followerCount;
 }

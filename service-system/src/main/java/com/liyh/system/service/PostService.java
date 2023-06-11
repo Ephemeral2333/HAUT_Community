@@ -7,6 +7,8 @@ import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tip;
 import com.liyh.model.vo.PostVo;
 
+import java.util.List;
+
 /**
  * @Author LiYH
  * @Description 帖子接口
@@ -25,4 +27,8 @@ public interface PostService extends IService<Post> {
 
     // 获取帖子详情
     Post selectByPk(Long id);
+
+    IPage<Post> selectPageByUserId(Page<Post> page, String userId);
+
+    List<Post> selectPostRandom();
 }

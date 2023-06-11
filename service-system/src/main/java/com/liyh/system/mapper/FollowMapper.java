@@ -19,4 +19,13 @@ public interface FollowMapper extends BaseMapper<Follow> {
     void unfollow(String userId, Long parentId);
 
     int isFollow(Long id, String userId);
+
+    /**
+     * @return java.lang.Integer
+     * @Author LiYH
+     * @Description 统计粉丝数
+     * @Date 22:42 2023/6/11
+     * @Param [userId]
+     **/
+    Integer selectFollowerCountByUserId(String userId);
 }

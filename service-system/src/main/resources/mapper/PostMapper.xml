@@ -43,6 +43,31 @@
         order by top desc, update_time desc
     </select>
     <select id="selectByPk" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
-        select * from post where id = #{id}
+        select *
+        from post
+        where id = #{id}
+    </select>
+    <select id="selectPageByUserId" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        <where>
+            is_deleted = 0
+            and user_id = #{userId}
+        </where>
+        order by create_time desc
+    </select>
+    <select id="selectCountByUserId" resultType="java.lang.Integer">
+        select count(*)
+        from post
+        where user_id = #{userId}
+          and is_deleted = 0
+    </select>
+    <select id="selectPostRandom" resultType="com.liyh.model.entity.Post">
+        select *
+        from post
+        where is_deleted = 0
+        order by rand()
+        limit 10
     </select>
 </mapper>

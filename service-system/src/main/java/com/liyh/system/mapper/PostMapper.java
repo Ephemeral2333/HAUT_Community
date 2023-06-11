@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Post;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 /**
  * @Author LiYH
  * @Description 帖子Mapper
@@ -20,4 +22,10 @@ public interface PostMapper extends BaseMapper<Post> {
     IPage<Post> selectPageByTime(Page<Post> tip);
 
     Post selectByPk(Long id);
+
+    IPage<Post> selectPageByUserId(Page<Post> post, String userId);
+
+    Integer selectCountByUserId(String userId);
+
+    List<Post> selectPostRandom();
 }

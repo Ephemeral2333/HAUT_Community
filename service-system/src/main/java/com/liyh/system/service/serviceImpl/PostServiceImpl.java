@@ -72,4 +72,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public Post selectByPk(Long id) {
         return postMapper.selectByPk(id);
     }
+
+    @Override
+    public IPage<Post> selectPageByUserId(Page<Post> page, String userId) {
+        return postMapper.selectPageByUserId(page, userId);
+    }
+
+    @Override
+    public List<Post> selectPostRandom() {
+        return postMapper.selectPostRandom();
+    }
 }

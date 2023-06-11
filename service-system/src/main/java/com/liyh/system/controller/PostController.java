@@ -61,4 +61,24 @@ public class PostController {
         Post post = postService.selectByPk(id);
         return Result.ok(post);
     }
+
+    @ApiOperation("获取我的帖子")
+    @PostMapping("/front/post/my")
+    public Result getMyPost(@RequestBody Pagination pagination, HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        Page<Post> page = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
+        IPage<Post> iPage = postService.selectPageByUserId(page, userId);
+        Map<String, Object> map = new HashMap<>();
+        map.put("list", iPage.getRecords());
+        map.put("total", iPage.getTotal());
+        map.put("pageSize", iPage.getSize());
+        map.put("currentPage", iPage.getCurrent());
+        return Result.ok(map);
+    }
+
+    @ApiOperation("随机获取十个帖子")
+    @GetMapping("/front/post/recommend")
+    public Result getPostRandom() {
+        return Result.ok(postService.selectPostRandom());
+    }
 }

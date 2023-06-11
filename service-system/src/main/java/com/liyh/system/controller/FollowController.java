@@ -6,10 +6,7 @@ import com.liyh.system.service.FollowService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
@@ -30,12 +27,15 @@ public class FollowController {
     @PostMapping("/front/follow/{id}")
     public Result follow(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        if (userId.equals(String.valueOf(id))) {
+            return Result.ok("不可以关注自己");
+        }
         followService.follow(userId, id);
         return Result.ok();
     }
 
     @ApiOperation("取消关注")
-    @PostMapping("/front/unfollow/{id}")
+    @DeleteMapping("/front/unfollow/{id}")
     public Result unfollow(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         followService.unfollow(userId, id);

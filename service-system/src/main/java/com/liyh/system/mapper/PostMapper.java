@@ -28,4 +28,8 @@ public interface PostMapper extends BaseMapper<Post> {
     Integer selectCountByUserId(String userId);
 
     List<Post> selectPostRandom();
+
+    void update(Post post);
+
+    IPage<Post> selectAllPage(Page<Post> page);
 }

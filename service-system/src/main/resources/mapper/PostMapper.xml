@@ -12,8 +12,41 @@
     </resultMap>
 
     <sql id="columns">
-        id,title,content,user_id,comments,collects,favor,view,top,essence,section_id,create_time,update_time,is_deleted
+        id,title,content,user_id,comments,collects,view,favor,top,essence,section_id,create_time,update_time,is_deleted
     </sql>
+    <update id="update">
+        update post
+        <set>
+            <if test="title != null and title != ''">
+                title = #{title},
+            </if>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+            <if test="sectionId != null">
+                section_id = #{sectionId},
+            </if>
+            <if test="top != null">
+                top = #{top},
+            </if>
+            <if test="essence != null">
+                essence = #{essence},
+            </if>
+            <if test="favor != null">
+                favor = #{favor},
+            </if>
+            <if test="collects != null">
+                collects = #{collects},
+            </if>
+            <if test="comments != null">
+                comments = #{comments},
+            </if>
+            <if test="view != null">
+                view = #{view},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
 
     <select id="selectPage" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
         select
@@ -69,5 +102,14 @@
         where is_deleted = 0
         order by rand()
         limit 10
+    </select>
+    <select id="selectAllPage" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        <where>
+            is_deleted = 0
+        </where>
+        order by create_time desc
     </select>
 </mapper>

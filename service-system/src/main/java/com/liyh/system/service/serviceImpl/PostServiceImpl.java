@@ -47,7 +47,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void savePost(PostVo postVo, String userId) {
+    public Post savePost(PostVo postVo, String userId) {
         Post post = Post.builder()
                 .title(postVo.getTitle())
                 .content(EmojiParser.parseToAliases(postVo.getContent()))
@@ -59,6 +59,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             List<Tag> tags = tagService.insertTags(postVo.getTags());
             tagService.createTopicTag(post.getId(), tags);
         }
+        return post;
     }
 
     /**
@@ -81,5 +82,24 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Override
     public List<Post> selectPostRandom() {
         return postMapper.selectPostRandom();
+    }
+
+    @Override
+    public Post updatePost(PostVo postVo, String userId) {
+        Post post = postMapper.selectByPk(postVo.getId());
+        post.setTitle(postVo.getTitle());
+        post.setContent(EmojiParser.parseToAliases(postVo.getContent()));
+        postMapper.deleteById(postVo.getId());
+        postMapper.update(post);
+        if (!ObjectUtils.isEmpty(postVo.getTags())) {
+            List<Tag> tags = tagService.insertTags(postVo.getTags());
+            tagService.createTopicTag(post.getId(), tags);
+        }
+        return post;
+    }
+
+    @Override
+    public IPage<Post> selectAllPage(Page<Post> page) {
+        return postMapper.selectAllPage(page);
     }
 }

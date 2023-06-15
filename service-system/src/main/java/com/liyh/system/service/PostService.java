@@ -23,7 +23,7 @@ public interface PostService extends IService<Post> {
 
     IPage<Post> selectPageByTime(Page<Post> tip);
 
-    void savePost(PostVo postVo, String userId);
+    Post savePost(PostVo postVo, String userId);
 
     // 获取帖子详情
     Post selectByPk(Long id);
@@ -31,4 +31,8 @@ public interface PostService extends IService<Post> {
     IPage<Post> selectPageByUserId(Page<Post> page, String userId);
 
     List<Post> selectPostRandom();
+
+    Post updatePost(PostVo postVo, String userId);
+
+    IPage<Post> selectAllPage(Page<Post> page);
 }

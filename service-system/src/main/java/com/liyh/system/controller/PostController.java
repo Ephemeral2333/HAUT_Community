@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
 import com.liyh.common.utils.JwtHelper;
 import com.liyh.model.entity.Post;
+import com.liyh.model.entity.Tag;
 import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.PostVo;
 import com.liyh.system.service.PostService;
+import com.liyh.system.service.TagService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,6 +33,9 @@ import java.util.Map;
 public class PostController {
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private TagService tagService;
 
     @ApiOperation("分页查询帖子")
     @PostMapping("/front/post/list/{tab}")
@@ -119,6 +125,23 @@ public class PostController {
         map.put("total", iPage.getTotal());
         map.put("pageSize", iPage.getSize());
         map.put("currentPage", iPage.getCurrent());
+        return Result.ok(map);
+    }
+
+    @ApiOperation("获取某标签下的帖子")
+    @PostMapping("/front/tag/getPageList/{id}")
+    public Result getPostByLabelId(@PathVariable Long id,
+                                   @RequestParam Integer page,
+                                   @RequestParam Integer size) {
+        Page<Post> postPage = new Page<>(page, size);
+        IPage<Post> iPage = postService.selectPageByTagId(postPage, id);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("topics", iPage.getRecords());
+        map.put("size", iPage.getSize());
+        map.put("page", iPage.getCurrent());
+        map.put("tags", tagService.getHotTags());
+        map.put("nowTag", tagService.getNameById(id));
         return Result.ok(map);
     }
 }

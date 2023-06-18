@@ -19,4 +19,8 @@ public interface TagService extends IService<Tag> {
     List<Tag> insertTags(List<String> tags);
 
     void createTopicTag(Long id, List<Tag> tags);
+
+    List<Tag> getHotTags();
+
+    String getNameById(Long id);
 }

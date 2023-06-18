@@ -34,4 +34,6 @@ public interface PostMapper extends BaseMapper<Post> {
     IPage<Post> selectAllPage(Page<Post> page);
 
     void increaseViewCount(Long id);
+
+    IPage<Post> selectPageByTagId(Page<Post> postPage, Long id);
 }

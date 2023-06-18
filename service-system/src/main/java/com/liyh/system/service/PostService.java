@@ -37,4 +37,6 @@ public interface PostService extends IService<Post> {
     IPage<Post> selectAllPage(Page<Post> page);
 
     void increaseViewCount(Long id);
+
+    IPage<Post> selectPageByTagId(Page<Post> postPage, Long id);
 }

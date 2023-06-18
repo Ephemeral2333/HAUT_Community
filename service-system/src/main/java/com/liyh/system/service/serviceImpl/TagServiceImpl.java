@@ -50,4 +50,14 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
             tagMapper.createTopicTag(topicId, tag.getId());
         }
     }
+
+    @Override
+    public List<Tag> getHotTags() {
+        return tagMapper.selectList(new QueryWrapper<Tag>().orderByDesc("topic_count").last("limit 10"));
+    }
+
+    @Override
+    public String getNameById(Long id) {
+        return tagMapper.selectById(id).getName();
+    }
 }

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @Author LiYH
@@ -36,4 +37,7 @@ public class Tag implements Serializable {
 
     @TableField("is_deleted")
     private boolean isDeleted;
+
+    @TableField(exist = false)
+    private List<Post> posts;
 }

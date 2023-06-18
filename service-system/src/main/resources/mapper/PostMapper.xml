@@ -117,4 +117,16 @@
         </where>
         order by create_time desc
     </select>
+    <select id="selectPageByTagId" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        where id in (
+        select topic_id
+        from post_tag
+        where tag_id = #{id}
+        )
+        and is_deleted = 0
+        order by create_time desc
+    </select>
 </mapper>

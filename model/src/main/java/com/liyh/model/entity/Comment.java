@@ -38,7 +38,7 @@ public class Comment extends BaseEntity implements Serializable {
     @TableField("parent_id")
     private Long parentId;  // 父评论id
 
-    @TableField("favor")
+    @TableField(exist = false)
     private Long favor;  // 点赞数
 
     @TableField(exist = false)
@@ -46,6 +46,9 @@ public class Comment extends BaseEntity implements Serializable {
 
     @TableField(exist = false)
     private String username;      // 评论者信息
+
+    @TableField(exist = false)
+    private String avatar;      // 评论者头像
 
     @TableField(exist = false)
     private List<Comment> children;   // 子评论

@@ -69,6 +69,7 @@ public class SysUserController {
         user.setPassword("123456");
         user.setNickname("未设置昵称");
         user.setIsDeleted(0);
+        user.setHeadUrl("http://rw61twimb.hb-bkt.clouddn.com/694ed4f96a14ca2299711140fdafc39b.jpg");
         // 使用MD5进行加密
         user.setPassword(MD5.encrypt(user.getPassword()));
         boolean isSuccess = sysUserService.save(user);

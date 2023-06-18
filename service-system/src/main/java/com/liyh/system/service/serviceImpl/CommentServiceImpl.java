@@ -33,13 +33,12 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     public List<Comment> getTopicCommentListByTopicId(Long id, Long userId) {
         List<Comment> commentList = commentMapper.getTopicCommentListByTopicId(id);
         if (userId == null) {
-            commentList.forEach(comment -> {
-                comment.setFavorite(false);
-            });
+            return commentList;
         } else {
             commentList.forEach(comment -> {
                 int favor = commentMapper.isFavor(comment.getId(), userId);
                 comment.setFavorite(favor != 0);
+                traverseAllChildren(comment, userId);
             });
         }
         return commentList;
@@ -51,8 +50,8 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 .content(commentPostVo.getContent())
                 .topicId(commentPostVo.getTopicId())
                 .userId(userId)
+                .parentId(0L)
                 .build();
-        log.info("comment:{}", comment);
         commentMapper.insert(comment);
     }
 
@@ -70,6 +69,37 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             commentMapper.favor(commentId, userId);
         } else {
             commentMapper.unFavor(commentId, userId);
+        }
+    }
+
+    @Override
+    public void replyComment(CommentPostVo commentPostVo, Long userId) {
+        Comment comment = Comment.builder()
+                .content(commentPostVo.getContent())
+                .topicId(commentPostVo.getTopicId())
+                .userId(userId)
+                .parentId(commentPostVo.getId())
+                .build();
+        commentMapper.insert(comment);
+    }
+
+    /**
+     * @return void
+     * @Author LiYH
+     * @Description 遍历所有的子评论，判断当前用户是否点赞
+     * @Date 14:00 2023/6/18
+     * @Param [comment, userId]
+     **/
+    public void traverseAllChildren(Comment comment, Long userId) {
+        // 遍历他的所有子评论
+        List<Comment> children = comment.getChildren();
+        if (children != null) {
+            children.forEach(child -> {
+                // 判断是否点赞
+                int favor = commentMapper.isFavor(child.getId(), userId);
+                child.setFavorite(favor != 0);
+                traverseAllChildren(child, userId);
+            });
         }
     }
 }

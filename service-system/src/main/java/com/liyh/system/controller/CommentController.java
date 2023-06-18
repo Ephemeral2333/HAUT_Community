@@ -57,4 +57,23 @@ public class CommentController {
         }
         return Result.ok();
     }
+
+    @ApiOperation("对评论进行回复")
+    @PostMapping("/admin/comments/reply")
+    public Result replyComment(@RequestBody CommentPostVo commentPostVo, HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        if (userId != null) {
+            commentService.replyComment(commentPostVo, Long.valueOf(userId));
+        } else {
+            return Result.fail("请先登录");
+        }
+        return Result.ok();
+    }
+
+    @ApiOperation("删除评论")
+    @DeleteMapping("/admin/comments/delete/{id}")
+    public Result deleteComment(@PathVariable Long id) {
+        commentService.removeById(id);
+        return Result.ok();
+    }
 }

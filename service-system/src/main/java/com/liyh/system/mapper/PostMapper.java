@@ -32,4 +32,6 @@ public interface PostMapper extends BaseMapper<Post> {
     void update(Post post);
 
     IPage<Post> selectAllPage(Page<Post> page);
+
+    void increaseViewCount(Long id);
 }

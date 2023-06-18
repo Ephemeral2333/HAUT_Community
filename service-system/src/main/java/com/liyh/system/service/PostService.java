@@ -35,4 +35,6 @@ public interface PostService extends IService<Post> {
     Post updatePost(PostVo postVo, String userId);
 
     IPage<Post> selectAllPage(Page<Post> page);
+
+    void increaseViewCount(Long id);
 }

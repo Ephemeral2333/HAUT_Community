@@ -47,6 +47,11 @@
         </set>
         where id = #{id}
     </update>
+    <update id="increaseViewCount">
+        update post
+        set view = view + 1
+        where id = #{id}
+    </update>
 
     <select id="selectPage" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
         select

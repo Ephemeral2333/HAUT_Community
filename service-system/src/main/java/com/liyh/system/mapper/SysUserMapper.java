@@ -22,4 +22,6 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     UserVo getFrontInfo(Long id);
 
     String getNameById(Long id);
+
+    String getAvatarById(Long id);
 }

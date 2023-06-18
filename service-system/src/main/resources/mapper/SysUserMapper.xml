@@ -70,7 +70,9 @@
         and is_deleted = 0
     </select>
     <select id="getFrontInfo" resultType="com.liyh.model.vo.UserVo" resultMap="frontInfo">
-        select * from sys_user where id = #{id}
+        select *
+        from sys_user
+        where id = #{id}
     </select>
     <select id="selectById" resultType="com.liyh.model.system.SysUser">
         select *
@@ -78,6 +80,13 @@
         where id = #{id}
     </select>
     <select id="getNameById" resultType="java.lang.String">
-        select username from sys_user where id = #{id}
+        select username
+        from sys_user
+        where id = #{id}
+    </select>
+    <select id="getAvatarById" resultType="java.lang.String">
+        select head_url
+        from sys_user
+        where id = #{id}
     </select>
 </mapper>

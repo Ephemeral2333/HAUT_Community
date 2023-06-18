@@ -19,4 +19,6 @@ public interface CommentService extends IService<Comment> {
     void pushComments(CommentPostVo commentPostVo, Long userId);
 
     void favor(Long commentId, Long userId);
+
+    void replyComment(CommentPostVo commentPostVo, Long userId);
 }

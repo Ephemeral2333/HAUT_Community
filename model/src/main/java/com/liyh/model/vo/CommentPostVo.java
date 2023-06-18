@@ -9,6 +9,7 @@ import lombok.Getter;
  **/
 @Getter
 public class CommentPostVo {
+    private Long id;
     private String content;
     private Long topicId;
 }

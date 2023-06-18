@@ -101,6 +101,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         sysUser.setPassword(registerVo.getPass());
         sysUser.setEmail(registerVo.getEmail());
         sysUser.setNickname(registerVo.getUsername());
+        sysUser.setHeadUrl("http://rw61twimb.hb-bkt.clouddn.com/694ed4f96a14ca2299711140fdafc39b.jpg");
         sysUserMapper.insert(sysUser);
     }
 

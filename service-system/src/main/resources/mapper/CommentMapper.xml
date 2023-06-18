@@ -8,6 +8,8 @@
     <resultMap id="includeUserName" type="com.liyh.model.entity.Comment" autoMapping="true">
         <id property="id" column="id"/>
         <result property="userId" column="user_id"/>
+        <association property="favor" column="id" select="getFavorsCount"/>
+        <association property="avatar" column="user_id" select="com.liyh.system.mapper.SysUserMapper.getAvatarById"/>
         <association property="username" column="user_id" select="com.liyh.system.mapper.SysUserMapper.getNameById"/>
         <collection property="children" column="id" select="findChildrenComments"/>
     </resultMap>
@@ -28,17 +30,25 @@
         from comment
         where topic_id = #{id}
           and parent_id = 0
+          and is_deleted = 0
     </select>
     <select id="findChildrenComments" resultType="com.liyh.model.entity.Comment" resultMap="includeUserName">
         select *
         from comment
         where parent_id = #{id}
+          and is_deleted = 0
     </select>
     <select id="isFavor" resultType="java.lang.Integer">
         select count(*)
         from favorite
         where user_id = #{userId}
           and favor_id = #{id}
+          and type = 1
+    </select>
+    <select id="getFavorsCount" resultType="java.lang.Long">
+        select count(*)
+        from favorite
+        where favor_id = #{id}
           and type = 1
     </select>
 </mapper>

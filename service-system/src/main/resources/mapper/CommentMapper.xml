@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.liyh.system.mapper.CommentMapper">
+    <resultMap id="includeUserName" type="com.liyh.model.entity.Comment" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <association property="username" column="user_id" select="com.liyh.system.mapper.SysUserMapper.getNameById"/>
+        <collection property="children" column="id" select="findChildrenComments"/>
+    </resultMap>
+    <insert id="favor">
+        insert into favorite (user_id, favor_id, type)
+        values (#{userId}, #{commentId}, 1)
+    </insert>
+    <delete id="unFavor">
+        delete
+        from favorite
+        where user_id = #{userId}
+          and favor_id = #{commentId}
+          and type = 1
+    </delete>
+
+    <select id="getTopicCommentListByTopicId" resultType="com.liyh.model.entity.Comment" resultMap="includeUserName">
+        select *
+        from comment
+        where topic_id = #{id}
+          and parent_id = 0
+    </select>
+    <select id="findChildrenComments" resultType="com.liyh.model.entity.Comment" resultMap="includeUserName">
+        select *
+        from comment
+        where parent_id = #{id}
+    </select>
+    <select id="isFavor" resultType="java.lang.Integer">
+        select count(*)
+        from favorite
+        where user_id = #{userId}
+          and favor_id = #{id}
+          and type = 1
+    </select>
+</mapper>

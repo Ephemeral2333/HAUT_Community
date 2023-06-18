@@ -102,4 +102,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public IPage<Post> selectAllPage(Page<Post> page) {
         return postMapper.selectAllPage(page);
     }
+
+    @Override
+    public void increaseViewCount(Long id) {
+        postMapper.increaseViewCount(id);
+    }
 }

@@ -69,6 +69,7 @@ public class PostController {
     @ApiOperation("获取帖子详情")
     @GetMapping("/front/post/{id}")
     public Result<Post> getTopic(@PathVariable Long id) {
+        postService.increaseViewCount(id);  // 增加浏览量
         Post post = postService.selectByPk(id);
         return Result.ok(post);
     }

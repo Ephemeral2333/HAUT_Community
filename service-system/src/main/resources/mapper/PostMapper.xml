@@ -52,16 +52,6 @@
         set view = view + 1
         where id = #{id}
     </update>
-
-    <select id="selectPage" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
-        select
-        <include refid="columns"/>
-        from post
-        <where>
-            is_deleted = 0
-        </where>
-        order by top desc, create_time desc
-    </select>
     <select id="selectPageByHot" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
         select
         <include refid="columns"/>

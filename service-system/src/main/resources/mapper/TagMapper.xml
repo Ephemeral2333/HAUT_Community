@@ -9,20 +9,32 @@
         id,name,topic_count,is_deleted
     </sql>
     <insert id="createTopicTag">
-        insert into post_tag(topic_id,tag_id) values(#{post},#{tag})
+        insert into post_tag(topic_id, tag_id)
+        values (#{post}, #{tag})
     </insert>
     <delete id="deletePostTagByTopicId">
         delete
         from post_tag
         where topic_id = #{topicId}
     </delete>
+    <delete id="deletePostTagByTagId">
+        delete
+        from post_tag
+        where tag_id = #{id}
+    </delete>
     <select id="selectTagsByPostId" resultType="com.liyh.model.entity.Tag">
-        select
-        *
+        select *
         from tag
-        where id in (
-        select tag_id from post_tag where topic_id = #{id}
-        )
+        where id in (select tag_id
+                     from post_tag
+                     where topic_id = #{id})
+    </select>
+    <select id="selectTagList" resultType="com.liyh.model.entity.Tag">
+        select
+        <include refid="columns"/>
+        from tag
+        where is_deleted = 0
+        order by id
     </select>
 
 

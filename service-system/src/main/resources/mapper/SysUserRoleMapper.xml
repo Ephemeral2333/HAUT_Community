@@ -8,6 +8,10 @@
     <resultMap id="SysUserMap" type="com.liyh.model.system.SysRole" autoMapping="true">
     </resultMap>
     <select id="selectRoleByUserName" resultType="com.liyh.model.system.SysRole" resultMap="SysUserMap">
-        select * from sys_role r left join sys_user_role ur on r.id = ur.role_id where ur.user_id = (select id from sys_user where username = #{username} and is_deleted = 0)
+        select *
+        from sys_role r
+                 left join sys_user_role ur on r.id = ur.role_id
+        where ur.user_id = (select id from sys_user where username = #{username} and is_deleted = 0)
+          and ur.is_deleted = 0
     </select>
 </mapper>

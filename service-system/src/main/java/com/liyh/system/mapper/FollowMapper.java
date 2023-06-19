@@ -1,6 +1,8 @@
 package com.liyh.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Follow;
 import com.liyh.model.vo.FollowerVo;
 import org.apache.ibatis.annotations.Mapper;
@@ -30,5 +32,7 @@ public interface FollowMapper extends BaseMapper<Follow> {
      **/
     Integer selectFollowerCountByUserId(String userId);
 
-    FollowerVo getFollowers(Long id);
+    IPage<FollowerVo> getFollowList(Page<FollowerVo> pageParam, Long id);
+
+    IPage<FollowerVo> getFansList(Page<FollowerVo> pageParam, Long id);
 }

@@ -1,6 +1,8 @@
 package com.liyh.system.service.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liyh.model.entity.Tag;
 import com.liyh.system.mapper.TagMapper;
@@ -78,5 +80,31 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     @Override
     public List<Tag> selectTagsByPostId(Long id) {
         return tagMapper.selectTagsByPostId(id);
+    }
+
+    @Override
+    public IPage<Tag> selectTagsList(Page<Tag> tagPage) {
+        return tagMapper.selectTagList(tagPage);
+    }
+
+    @Override
+    public void saveTag(String name) {
+        Tag tag = tagMapper.selectOne(new QueryWrapper<Tag>().eq("name", name));
+        if (tag == null) {
+            tag = Tag.builder().name(name).topicCount(0).build();
+            tagMapper.insert(tag);
+        }
+    }
+
+    @Override
+    public void updateTag(Long id, String name) {
+        Tag tag = tagMapper.selectById(id);
+        tag.setName(name);
+        tagMapper.updateById(tag);
+    }
+
+    @Override
+    public void removePostTagByTagId(Long id) {
+        tagMapper.deletePostTagByTagId(id);
     }
 }

@@ -24,4 +24,8 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     String getNameById(Long id);
 
     String getAvatarById(Long id);
+
+    String selectNickNameById(Long id);
+
+    void updatePhoto(String url, Long id);
 }

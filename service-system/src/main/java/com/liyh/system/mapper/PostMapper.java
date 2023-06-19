@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Post;
+import com.liyh.model.vo.PostVo;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -36,4 +37,6 @@ public interface PostMapper extends BaseMapper<Post> {
     void increaseViewCount(Long id);
 
     IPage<Post> selectPageByTagId(Page<Post> postPage, Long id);
+
+    IPage<Post> searchByKeyword(Page<Post> page, String keyword);
 }

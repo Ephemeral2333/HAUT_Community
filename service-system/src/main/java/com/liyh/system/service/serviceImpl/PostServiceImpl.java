@@ -11,6 +11,7 @@ import com.liyh.system.service.PostService;
 import com.liyh.system.service.TagService;
 import com.vdurmont.emoji.EmojiParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -89,7 +90,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         Post post = postMapper.selectByPk(postVo.getId());
         post.setTitle(postVo.getTitle());
         post.setContent(EmojiParser.parseToAliases(postVo.getContent()));
-        postMapper.deleteById(postVo.getId());
         postMapper.update(post);
         if (!ObjectUtils.isEmpty(postVo.getTags())) {
             List<Tag> tags = tagService.insertTags(postVo.getTags());
@@ -111,5 +111,10 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Override
     public IPage<Post> selectPageByTagId(Page<Post> postPage, Long id) {
         return postMapper.selectPageByTagId(postPage, id);
+    }
+
+    @Override
+    public IPage<Post> searchByKeyword(Page<Post> page, String keyWord) {
+        return postMapper.searchByKeyword(page, keyWord);
     }
 }

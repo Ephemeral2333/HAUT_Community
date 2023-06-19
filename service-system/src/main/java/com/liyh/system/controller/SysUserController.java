@@ -67,7 +67,7 @@ public class SysUserController {
     public Result save(@RequestBody SysUser user) {
         user.setDeptId(user.getParentId());
         user.setPassword("123456");
-        user.setNickname("未设置昵称");
+        user.setNickname(user.getUsername());
         user.setIsDeleted(0);
         user.setHeadUrl("http://rw61twimb.hb-bkt.clouddn.com/694ed4f96a14ca2299711140fdafc39b.jpg");
         // 使用MD5进行加密

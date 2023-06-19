@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.liyh.model.system.SysUser;
+import com.liyh.model.vo.FollowerVo;
 import com.liyh.model.vo.RegisterVo;
 import com.liyh.model.vo.SysUserQueryVo;
 import com.liyh.model.vo.UserVo;
@@ -30,4 +31,6 @@ public interface SysUserService extends IService<SysUser> {
     void register(RegisterVo registerVo);
 
     UserVo getUserInfo(Long id);
+
+    void saveAvatar(String url, Long id);
 }

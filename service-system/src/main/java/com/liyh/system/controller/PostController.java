@@ -7,9 +7,14 @@ import com.liyh.common.result.Result;
 import com.liyh.common.utils.JwtHelper;
 import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tag;
+import com.liyh.model.system.SysUser;
+import com.liyh.model.vo.FollowerVo;
 import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.PostVo;
+import com.liyh.model.vo.UserVo;
+import com.liyh.system.service.FollowService;
 import com.liyh.system.service.PostService;
+import com.liyh.system.service.SysUserService;
 import com.liyh.system.service.TagService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -36,6 +41,9 @@ public class PostController {
 
     @Autowired
     private TagService tagService;
+
+    @Autowired
+    private SysUserService sysUserService;
 
     @ApiOperation("分页查询帖子")
     @PostMapping("/front/post/list/{tab}")
@@ -105,13 +113,10 @@ public class PostController {
     public Result deletePost(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         Post post = postService.selectByPk(id);
-        log.info("post = " + post.getAuthor().getId());
-        log.info("userId = " + userId);
         if (userId != null && !userId.equals(String.valueOf(post.getAuthor().getId()))) {
             return Result.ok("无权限删除");
         }
         postService.removeById(id);
-        System.out.println("post = " + post.getUserId());
         return Result.ok();
     }
 
@@ -142,6 +147,25 @@ public class PostController {
         map.put("page", iPage.getCurrent());
         map.put("tags", tagService.getHotTags());
         map.put("nowTag", tagService.getNameById(id));
+        return Result.ok(map);
+    }
+
+    @ApiOperation("获取用户主页的帖子")
+    @GetMapping("/front/user/info/{username}")
+    public Result getPostByUserId(@PathVariable String username,
+                                  @RequestParam Integer page,
+                                  @RequestParam Integer size) {
+        SysUser sysUser = sysUserService.getByUsername(username);
+        UserVo userVo = sysUserService.getUserInfo(sysUser.getId());
+        Page<Post> postPage = new Page<>(page, size);
+        IPage<Post> iPage = postService.selectPageByUserId(postPage, String.valueOf(sysUser.getId()));
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("records", iPage.getRecords());
+        map.put("total", iPage.getTotal());
+        map.put("pageSize", iPage.getSize());
+        map.put("currentPage", iPage.getCurrent());
+        map.put("user", userVo);
         return Result.ok(map);
     }
 }

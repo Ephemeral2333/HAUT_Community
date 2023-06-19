@@ -129,4 +129,31 @@
         and is_deleted = 0
         order by create_time desc
     </select>
+    <select id="searchByKeyword" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        where is_deleted = 0
+        and
+        (
+        (title like concat('%', #{keyword}, '%') or content like concat('%', #{keyword}, '%'))
+        or
+        id in (
+        select topic_id
+        from post_tag
+        where tag_id in (
+        select id
+        from tag
+        where name like concat('%', #{keyword}, '%')
+        )
+        )
+        or
+        id in (
+        select id from post where user_id in (
+        select id from sys_user where nickname like concat('%', #{keyword}, '%')
+        )
+        )
+        )
+        order by create_time desc
+    </select>
 </mapper>

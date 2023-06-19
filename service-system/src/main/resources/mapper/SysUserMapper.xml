@@ -25,6 +25,7 @@
         <id property="id" column="id"/>
         <result property="username" column="username"/>
         <result property="headUrl" column="head_url"/>
+        <result property="createTime" column="create_time"/>
         <association property="topicCount" column="id" select="com.liyh.system.mapper.PostMapper.selectCountByUserId"/>
         <association property="followerCount" column="id"
                      select="com.liyh.system.mapper.FollowMapper.selectFollowerCountByUserId"/>
@@ -39,12 +40,25 @@
         id,username,password,nickname,email,sex,head_url,dept_id,description,status,create_time,update_time,is_deleted
     </sql>
     <update id="updateByEntity">
-        update sys_user set username = #{username}, email = #{email}, dept_id = #{deptId}, sex = #{sex}, description = #{description}, update_time = NOW()
+        update sys_user
+        set username    = #{username},
+            email       = #{email},
+            dept_id     = #{deptId},
+            sex         = #{sex},
+            description = #{description},
+            update_time = NOW()
+        where id = #{id}
+    </update>
+    <update id="updatePhoto">
+        update sys_user
+        set head_url    = #{url},
+            update_time = NOW()
         where id = #{id}
     </update>
 
     <select id="selectPage" resultMap="SysUserMap">
-        select <include refid="columns" />
+        select
+        <include refid="columns"/>
         from sys_user
         <where>
             <if test="vo.username != null and vo.username != ''">
@@ -86,6 +100,11 @@
     </select>
     <select id="getAvatarById" resultType="java.lang.String">
         select head_url
+        from sys_user
+        where id = #{id}
+    </select>
+    <select id="selectNickNameById" resultType="java.lang.String">
+        select nickname
         from sys_user
         where id = #{id}
     </select>

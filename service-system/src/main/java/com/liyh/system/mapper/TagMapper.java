@@ -17,5 +17,5 @@ public interface TagMapper extends BaseMapper<Tag> {
 
     void createTopicTag(Long post, Long tag);
 
-    void deleteByTopicId(Long topicId);
+    void deletePostTagByTopicId(Long topicId);
 }

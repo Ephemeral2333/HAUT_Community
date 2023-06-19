@@ -30,7 +30,8 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
             queryWrapper.eq("name", tagName);
             Tag tag = tagMapper.selectOne(queryWrapper);
             if (tag == null) {
-                tag = Tag.builder().name(tagName).build();
+                // 由于这里是新增标签，所以默认标签的话题数为1
+                tag = Tag.builder().name(tagName).topicCount(1).build();
                 tagMapper.insert(tag);
             } else {
                 tag.setTopicCount(tag.getTopicCount() + 1);
@@ -43,8 +44,16 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
 
     @Override
     public void createTopicTag(Long topicId, List<Tag> tags) {
+        // 先获取原有的标签
+        List<Tag> oldTags = tagMapper.selectTagsByPostId(topicId);
+        // 遍历原有的标签，让他们都减1
+        for (Tag oldTag : oldTags) {
+            oldTag.setTopicCount(oldTag.getTopicCount() - 1);
+            tagMapper.updateById(oldTag);
+        }
+
         // 先删除原有的标签，方便更新
-        tagMapper.deleteByTopicId(topicId);
+        tagMapper.deletePostTagByTopicId(topicId);
 
         for (Tag tag : tags) {
             tagMapper.createTopicTag(topicId, tag.getId());
@@ -59,5 +68,15 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     @Override
     public String getNameById(Long id) {
         return tagMapper.selectById(id).getName();
+    }
+
+    @Override
+    public void deleteTopicTagByTopicId(Long id) {
+        tagMapper.deletePostTagByTopicId(id);
+    }
+
+    @Override
+    public List<Tag> selectTagsByPostId(Long id) {
+        return tagMapper.selectTagsByPostId(id);
     }
 }

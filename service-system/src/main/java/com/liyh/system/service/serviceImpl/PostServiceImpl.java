@@ -7,6 +7,7 @@ import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tag;
 import com.liyh.model.vo.PostVo;
 import com.liyh.system.mapper.PostMapper;
+import com.liyh.system.service.CommentService;
 import com.liyh.system.service.PostService;
 import com.liyh.system.service.TagService;
 import com.vdurmont.emoji.EmojiParser;
@@ -30,6 +31,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Autowired
     private TagService tagService;
+
+    @Autowired
+    private CommentService commentService;
 
     @Override
     public IPage<Post> selectPage(Page<Post> tip) {
@@ -87,10 +91,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public Post updatePost(PostVo postVo, String userId) {
+        // 先找到帖子
         Post post = postMapper.selectByPk(postVo.getId());
         post.setTitle(postVo.getTitle());
         post.setContent(EmojiParser.parseToAliases(postVo.getContent()));
+
+        // 更新帖子信息
         postMapper.update(post);
+
+        // 更新帖子标签
         if (!ObjectUtils.isEmpty(postVo.getTags())) {
             List<Tag> tags = tagService.insertTags(postVo.getTags());
             tagService.createTopicTag(post.getId(), tags);
@@ -116,5 +125,22 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Override
     public IPage<Post> searchByKeyword(Page<Post> page, String keyWord) {
         return postMapper.searchByKeyword(page, keyWord);
+    }
+
+    @Override
+    public void deletePost(Long id) {
+        // 先获取帖子的所有标签
+        List<Tag> tags = tagService.selectTagsByPostId(id);
+        // 让每个标签的引用数减一
+        tags.forEach(tag -> {
+            tag.setTopicCount(tag.getTopicCount() - 1);
+            tagService.updateById(tag);
+        });
+        // 先删除帖子
+        postMapper.deleteById(id);
+        // 然后删除帖子和标签的关联关系
+        tagService.deleteTopicTagByTopicId(id);
+        // 删除帖子和评论的关联关系
+        commentService.deleteCommentByPostId(id);
     }
 }

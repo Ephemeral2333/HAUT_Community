@@ -24,6 +24,11 @@
           and favor_id = #{commentId}
           and type = 1
     </delete>
+    <delete id="deleteCommentByPostId">
+        update comment
+        set is_deleted = 1
+        where topic_id = #{id}
+    </delete>
 
     <select id="getTopicCommentListByTopicId" resultType="com.liyh.model.entity.Comment" resultMap="includeUserName">
         select *

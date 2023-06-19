@@ -23,4 +23,8 @@ public interface TagService extends IService<Tag> {
     List<Tag> getHotTags();
 
     String getNameById(Long id);
+
+    void deleteTopicTagByTopicId(Long id);
+
+    List<Tag> selectTagsByPostId(Long id);
 }

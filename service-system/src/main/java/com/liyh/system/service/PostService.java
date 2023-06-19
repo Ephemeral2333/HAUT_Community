@@ -39,4 +39,6 @@ public interface PostService extends IService<Post> {
     void increaseViewCount(Long id);
 
     IPage<Post> selectPageByTagId(Page<Post> postPage, Long id);
+
+    IPage<Post> searchByKeyword(Page<Post> page, String keyWord);
 }

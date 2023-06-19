@@ -41,9 +41,10 @@ public class FileServiceImpl implements FileService {
     UploadManager uploadManager = new UploadManager(cfg);
 
     // 测试域名，只有30天有效期
-    private static String QINIU_IMAGE_DOMAIN = "http://rw61twimb.hb-bkt.clouddn.com/headphoto/";
+    private static String QINIU_IMAGE_DOMAIN = "http://rw61twimb.hb-bkt.clouddn.com/";
 
     // 简单上传，使用默认策略，只需要设置上传的空间名就可以了
+    @Override
     public String getUpToken() {
         return auth.uploadToken(bucketname);
     }
@@ -63,7 +64,7 @@ public class FileServiceImpl implements FileService {
 
             String fileName = UUID.randomUUID().toString().replaceAll("-", "") + "." + fileExt;
             // 调用put方法上传
-            Response res = uploadManager.put(file.getBytes(), fileName, getUpToken());
+            Response res = uploadManager.put(file.getBytes(), "community/" + fileName, getUpToken());
             // 打印返回的信息
             if (res.isOK() && res.isJson()) {
                 // 返回这张存储照片的地址

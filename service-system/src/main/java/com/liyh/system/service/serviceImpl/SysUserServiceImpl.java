@@ -8,6 +8,7 @@ import com.liyh.common.utils.MD5;
 import com.liyh.model.system.SysRole;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.system.SysUserRole;
+import com.liyh.model.vo.FollowerVo;
 import com.liyh.model.vo.RegisterVo;
 import com.liyh.model.vo.SysUserQueryVo;
 import com.liyh.model.vo.UserVo;
@@ -108,5 +109,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public UserVo getUserInfo(Long id) {
         return sysUserMapper.getFrontInfo(id);
+    }
+
+    @Override
+    public void saveAvatar(String url, Long id) {
+        sysUserMapper.updatePhoto(url, id);
     }
 }

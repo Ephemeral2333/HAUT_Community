@@ -2,6 +2,7 @@ package com.liyh.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.liyh.model.entity.Follow;
+import com.liyh.model.vo.FollowerVo;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -28,4 +29,6 @@ public interface FollowMapper extends BaseMapper<Follow> {
      * @Param [userId]
      **/
     Integer selectFollowerCountByUserId(String userId);
+
+    FollowerVo getFollowers(Long id);
 }

@@ -2,6 +2,7 @@ package com.liyh.system.service.serviceImpl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liyh.model.entity.Follow;
+import com.liyh.model.vo.FollowerVo;
 import com.liyh.system.mapper.FollowMapper;
 import com.liyh.system.service.FollowService;
 import org.springframework.beans.factory.annotation.Autowired;

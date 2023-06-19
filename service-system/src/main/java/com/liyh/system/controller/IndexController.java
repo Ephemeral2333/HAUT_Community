@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -113,6 +114,15 @@ public class IndexController {
     public Result logout(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         redisTemplate.delete(userId);
+        return Result.ok();
+    }
+
+    @ApiOperation("保存头像")
+    @PostMapping("/savePhoto/{id}")
+    public Result saveAvatar(@RequestBody String url, @PathVariable("id") Long id) {
+        url = URLDecoder.decode(url);
+        url = url.substring(0, url.length() - 1);
+        sysUserService.saveAvatar(url, id);
         return Result.ok();
     }
 }

@@ -50,4 +50,8 @@ spring:
       ###解决项目自动重新编译后接口报404的问题
       poll-interval: 3000
       quiet-period: 1000
+  servlet:
+    multipart:
+      max-file-size: 1000MB
+      max-request-size: 1000MB
 

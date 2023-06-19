@@ -28,4 +28,5 @@ public class UserVo implements Serializable {
     private SysDept sysDept;
     private Integer topicCount;
     private Integer followerCount;
+    private String createTime;
 }

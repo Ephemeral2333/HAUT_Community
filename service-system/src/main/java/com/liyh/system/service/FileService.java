@@ -11,4 +11,6 @@ import java.io.IOException;
  **/
 public interface FileService {
     String saveImage(MultipartFile file) throws IOException;
+
+    String getUpToken();
 }

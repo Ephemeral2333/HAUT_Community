@@ -2,6 +2,7 @@ package com.liyh.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.liyh.model.entity.Follow;
+import com.liyh.model.vo.FollowerVo;
 
 import java.util.List;
 

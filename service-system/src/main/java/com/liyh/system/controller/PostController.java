@@ -49,7 +49,6 @@ public class PostController {
     @PostMapping("/front/post/list/{tab}")
     public Result getPageList(@RequestBody Pagination pagination, @PathVariable String tab) {
         Page<Post> tip = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
-//        IPage<Post> page = postService.selectPage(tip);
         IPage<Post> page;
         if ("hot".equals(tab)) {
             page = postService.selectPageByHot(tip);
@@ -116,7 +115,7 @@ public class PostController {
         if (userId != null && !userId.equals(String.valueOf(post.getAuthor().getId()))) {
             return Result.ok("无权限删除");
         }
-        postService.removeById(id);
+        postService.deletePost(id);
         return Result.ok();
     }
 

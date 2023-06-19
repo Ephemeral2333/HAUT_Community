@@ -25,4 +25,6 @@ public interface CommentMapper extends BaseMapper<Comment> {
     void unFavor(Long commentId, Long userId);
 
     Long getFavorsCount(Long id);
+
+    void deleteCommentByPostId(Long id);
 }

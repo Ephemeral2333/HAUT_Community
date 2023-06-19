@@ -21,4 +21,6 @@ public interface CommentService extends IService<Comment> {
     void favor(Long commentId, Long userId);
 
     void replyComment(CommentPostVo commentPostVo, Long userId);
+
+    void deleteCommentByPostId(Long id);
 }

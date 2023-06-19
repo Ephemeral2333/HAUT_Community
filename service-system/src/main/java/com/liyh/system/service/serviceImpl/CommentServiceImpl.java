@@ -83,6 +83,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         commentMapper.insert(comment);
     }
 
+    @Override
+    public void deleteCommentByPostId(Long id) {
+        commentMapper.deleteCommentByPostId(id);
+    }
+
     /**
      * @return void
      * @Author LiYH

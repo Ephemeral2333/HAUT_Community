@@ -548,21 +548,4 @@ VALUES (13, '如果不是怕别人反感，女人决不会保持完整的严肃�
 INSERT INTO `tip`
 VALUES (24864, '读书百遍,其义自见', 'admin', '朱熹', 0, '2023-06-06 15:52:47', '2023-06-06 15:53:02');
 
--- ----------------------------
--- Triggers structure for table post
--- ----------------------------
-DROP TRIGGER IF EXISTS `reduce_tagCount`;
-delimiter ;;
-CREATE TRIGGER `reduce_tagCount`
-    BEFORE DELETE
-    ON `post`
-    FOR EACH ROW
-BEGIN
-    UPDATE tag
-    SET topic_count = topic_count - 1
-    WHERE id IN (SELECT tag_id FROM post_tag WHERE post_tag.topic_id = OLD.id);
-END
-;;
-delimiter ;
-
 SET FOREIGN_KEY_CHECKS = 1;

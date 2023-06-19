@@ -16,29 +16,42 @@ import java.util.List;
  **/
 
 public interface PostService extends IService<Post> {
-
+    // 分页查询帖子
     IPage<Post> selectPage(Page<Post> tip);
 
+    // 分页查询热门帖子
     IPage<Post> selectPageByHot(Page<Post> tip);
 
+    // 分页查询最新帖子
     IPage<Post> selectPageByTime(Page<Post> tip);
 
+    // 发布帖子
     Post savePost(PostVo postVo, String userId);
 
     // 获取帖子详情
     Post selectByPk(Long id);
 
+    // 分页查询我的帖子
     IPage<Post> selectPageByUserId(Page<Post> page, String userId);
 
+    // 随机给出帖子
     List<Post> selectPostRandom();
 
+    // 更新帖子
     Post updatePost(PostVo postVo, String userId);
 
+    // 分页查询所有帖子
     IPage<Post> selectAllPage(Page<Post> page);
 
+    // 增加浏览量
     void increaseViewCount(Long id);
 
+    // 分页查询某个标签的所有帖子
     IPage<Post> selectPageByTagId(Page<Post> postPage, Long id);
 
+    // 通过关键词搜索帖子
     IPage<Post> searchByKeyword(Page<Post> page, String keyWord);
+
+    // 删除帖子
+    void deletePost(Long id);
 }

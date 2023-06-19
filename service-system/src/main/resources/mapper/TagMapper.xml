@@ -11,8 +11,10 @@
     <insert id="createTopicTag">
         insert into post_tag(topic_id,tag_id) values(#{post},#{tag})
     </insert>
-    <delete id="deleteByTopicId">
-        delete from post_tag where topic_id = #{topicId}
+    <delete id="deletePostTagByTopicId">
+        delete
+        from post_tag
+        where topic_id = #{topicId}
     </delete>
     <select id="selectTagsByPostId" resultType="com.liyh.model.entity.Tag">
         select

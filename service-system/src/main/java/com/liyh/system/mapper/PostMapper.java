@@ -16,8 +16,6 @@ import java.util.List;
  **/
 @Mapper
 public interface PostMapper extends BaseMapper<Post> {
-    IPage<Post> selectPage(Page<Post> post);
-
     IPage<Post> selectPageByHot(Page<Post> tip);
 
     IPage<Post> selectPageByTime(Page<Post> tip);

@@ -10,5 +10,7 @@ import lombok.Data;
 @Data
 public class FollowerVo {
     private Long id;
-    private Long nickname;
+    private String username;
+    private String nickname;
+    private String avatar;
 }

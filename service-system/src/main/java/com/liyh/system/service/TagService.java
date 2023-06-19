@@ -27,4 +27,14 @@ public interface TagService extends IService<Tag> {
     void deleteTopicTagByTopicId(Long id);
 
     List<Tag> selectTagsByPostId(Long id);
+
+    // 分页查询标签列表
+    IPage<Tag> selectTagsList(Page<Tag> tagPage);
+
+    void saveTag(String name);
+
+    void updateTag(Long id, String name);
+
+    // 在删除标签时，需要删除标签与文章的关联关系
+    void removePostTagByTagId(Long id);
 }

@@ -1,7 +1,11 @@
 package com.liyh.system.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
 import com.liyh.common.utils.JwtHelper;
+import com.liyh.model.vo.FollowerVo;
+import com.liyh.model.vo.UserVo;
 import com.liyh.system.service.FollowService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -48,6 +52,36 @@ public class FollowController {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         Map<String, Object> map = new HashMap<>();
         map.put("hasFollow", followService.isFollow(id, userId));
+        return Result.ok(map);
+    }
+
+    @ApiOperation("获取关注列表")
+    @GetMapping("/front/follow/{page}/{limit}")
+    public Result getFollowList(@PathVariable Long page,
+                                @PathVariable Long limit,
+                                @RequestParam(name = "username") String username) {
+        Page<FollowerVo> pageParam = new Page<>(page, limit);
+        IPage<FollowerVo> pageModel = followService.getFollowList(pageParam, username);
+        Map<String, Object> map = new HashMap<>();
+        map.put("items", pageModel.getRecords());
+        map.put("total", pageModel.getTotal());
+        map.put("page", pageModel.getCurrent());
+        map.put("size", pageModel.getSize());
+        return Result.ok(map);
+    }
+
+    @ApiOperation("获取粉丝列表")
+    @GetMapping("/front/fans/{page}/{limit}")
+    public Result getFansList(@PathVariable Long page,
+                              @PathVariable Long limit,
+                              @RequestParam(name = "username") String username) {
+        Page<FollowerVo> pageParam = new Page<>(page, limit);
+        IPage<FollowerVo> pageModel = followService.getFansList(pageParam, username);
+        Map<String, Object> map = new HashMap<>();
+        map.put("items", pageModel.getRecords());
+        map.put("total", pageModel.getTotal());
+        map.put("page", pageModel.getCurrent());
+        map.put("size", pageModel.getSize());
         return Result.ok(map);
     }
 }

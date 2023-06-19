@@ -36,11 +36,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private CommentService commentService;
 
     @Override
-    public IPage<Post> selectPage(Page<Post> tip) {
-        return postMapper.selectPage(tip);
-    }
-
-    @Override
     public IPage<Post> selectPageByHot(Page<Post> tip) {
         return postMapper.selectPageByHot(tip);
     }
@@ -136,7 +131,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             tag.setTopicCount(tag.getTopicCount() - 1);
             tagService.updateById(tag);
         });
-        // 先删除帖子
+        // 删除帖子
         postMapper.deleteById(id);
         // 然后删除帖子和标签的关联关系
         tagService.deleteTopicTagByTopicId(id);

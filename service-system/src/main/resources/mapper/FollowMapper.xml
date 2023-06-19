@@ -5,6 +5,12 @@
 
 
 <mapper namespace="com.liyh.system.mapper.FollowMapper">
+    <resultMap id="followVo" type="com.liyh.model.vo.FollowerVo">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="head_url" property="avatar"/>
+    </resultMap>
     <sql id="columns">
         id,parent_id,follower_id,is_deleted
     </sql>
@@ -29,6 +35,22 @@
         from follow
         where parent_id = #{userId}
           and is_deleted = 0
+    </select>
+    <select id="getFollowList" resultType="com.liyh.model.vo.FollowerVo" resultMap="followVo">
+        select *
+        from sys_user u
+        where u.id in (select parent_id
+                       from follow
+                       where follower_id = #{id}
+                         and is_deleted = 0)
+    </select>
+    <select id="getFansList" resultType="com.liyh.model.vo.FollowerVo" resultMap="followVo">
+        select *
+        from sys_user u
+        where u.id in (select follower_id
+                       from follow
+                       where parent_id = #{id}
+                         and is_deleted = 0)
     </select>
 
 </mapper>

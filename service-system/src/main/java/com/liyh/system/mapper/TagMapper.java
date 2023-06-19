@@ -1,6 +1,8 @@
 package com.liyh.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Tag;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -18,4 +20,8 @@ public interface TagMapper extends BaseMapper<Tag> {
     void createTopicTag(Long post, Long tag);
 
     void deletePostTagByTopicId(Long topicId);
+
+    IPage<Tag> selectTagList(Page<Tag> tagPage);
+
+    void deletePostTagByTagId(Long id);
 }

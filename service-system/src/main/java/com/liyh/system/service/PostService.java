@@ -16,9 +16,6 @@ import java.util.List;
  **/
 
 public interface PostService extends IService<Post> {
-    // 分页查询帖子
-    IPage<Post> selectPage(Page<Post> tip);
-
     // 分页查询热门帖子
     IPage<Post> selectPageByHot(Page<Post> tip);
 

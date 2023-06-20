@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.liyh.system.mapper.TipPostMapper">
+    <sql id="columns">
+        id,author,content,postman,postman_id,post_time,is_accepted
+    </sql>
+    <select id="selectPage" resultType="com.liyh.model.entity.TipPost">
+        select
+        <include refid="columns"/>
+        from tip_post where is_accepted = 0
+    </select>
+</mapper>

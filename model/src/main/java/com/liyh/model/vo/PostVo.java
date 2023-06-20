@@ -15,4 +15,5 @@ public class PostVo {
     private String content;
     private String title;
     private List<String> tags;
+    private boolean anonymous;   // 是否匿名
 }

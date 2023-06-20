@@ -108,4 +108,9 @@
         from sys_user
         where id = #{id}
     </select>
+    <select id="getEmailById" resultType="java.lang.String">
+        select email
+        from sys_user
+        where id = #{id}
+    </select>
 </mapper>

@@ -52,6 +52,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                 .title(postVo.getTitle())
                 .content(EmojiParser.parseToAliases(postVo.getContent()))
                 .userId(Long.valueOf(userId))
+                .anonymous(postVo.isAnonymous())
                 .build();
         postMapper.insert(post);
 
@@ -90,6 +91,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         Post post = postMapper.selectByPk(postVo.getId());
         post.setTitle(postVo.getTitle());
         post.setContent(EmojiParser.parseToAliases(postVo.getContent()));
+        post.setAnonymous(postVo.isAnonymous());
 
         // 更新帖子信息
         postMapper.update(post);

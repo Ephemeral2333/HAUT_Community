@@ -12,7 +12,7 @@
     </resultMap>
 
     <sql id="columns">
-        id,title,content,user_id,comments,collects,view,favor,top,essence,section_id,create_time,update_time,is_deleted
+        id,title,content,user_id,comments,collects,view,favor,top,essence,anonymous,section_id,create_time,update_time,is_deleted
     </sql>
     <update id="update">
         update post
@@ -31,6 +31,9 @@
             </if>
             <if test="essence != null">
                 essence = #{essence},
+            </if>
+            <if test="anonymous != null">
+                anonymous = #{anonymous},
             </if>
             <if test="favor != null">
                 favor = #{favor},

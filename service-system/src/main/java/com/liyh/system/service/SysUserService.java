@@ -33,4 +33,6 @@ public interface SysUserService extends IService<SysUser> {
     UserVo getUserInfo(Long id);
 
     void saveAvatar(String url, Long id);
+
+    String getEmailById(Long postManId);
 }

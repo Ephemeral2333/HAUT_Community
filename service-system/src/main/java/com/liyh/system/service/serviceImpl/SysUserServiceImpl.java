@@ -115,4 +115,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     public void saveAvatar(String url, Long id) {
         sysUserMapper.updatePhoto(url, id);
     }
+
+    @Override
+    public String getEmailById(Long postManId) {
+        return sysUserMapper.getEmailById(postManId);
+    }
 }

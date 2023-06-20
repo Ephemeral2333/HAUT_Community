@@ -46,6 +46,9 @@ public class Post extends BaseEntity implements Serializable {
     @TableField("view")
     private int view;
 
+    @TableField("anonymous")
+    private boolean anonymous;
+
     @TableField("top")
     private boolean top;
 

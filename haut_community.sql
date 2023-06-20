@@ -11,7 +11,7 @@
  Target Server Version : 80028
  File Encoding         : 65001
 
- Date: 18/06/2023 12:49:52
+ Date: 20/06/2023 11:20:58
 */
 
 SET NAMES utf8mb4;
@@ -30,7 +30,7 @@ CREATE TABLE `billboard`
     `is_deleted`  tinyint                                                       NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
     PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 5
+  AUTO_INCREMENT = 6
   CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT = '全站公告'
   ROW_FORMAT = DYNAMIC;
@@ -44,6 +44,8 @@ INSERT INTO `billboard`
 VALUES (2, '系统已更新至最新版1.0.6', '2020-11-19 17:16:19', '2023-06-08 09:59:45', 0);
 INSERT INTO `billboard`
 VALUES (4, '111', '2023-06-08 10:01:51', '2023-06-08 10:03:17', 1);
+INSERT INTO `billboard`
+VALUES (5, '已经大致完成基本使用啦！', '2023-06-19 09:22:32', '2023-06-19 09:22:32', 0);
 
 -- ----------------------------
 -- Table structure for comment
@@ -55,14 +57,13 @@ CREATE TABLE `comment`
     `content`     varchar(1000) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '内容',
     `user_id`     bigint                                                   NOT NULL COMMENT '作者ID',
     `topic_id`    bigint                                                   NOT NULL COMMENT 'topic_id',
-    `favor`       bigint                                                   NOT NULL DEFAULT 0 COMMENT '点赞数',
     `parent_id`   bigint                                                   NOT NULL DEFAULT 0 COMMENT '父级评论',
     `create_time` datetime                                                 NOT NULL DEFAULT 'now()' COMMENT '发布时间',
     `update_time` datetime                                                 NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     `is_deleted`  tinyint                                                  NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
     PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 6
+  AUTO_INCREMENT = 10
   CHARACTER SET = utf8
   COLLATE = utf8_general_ci COMMENT = '评论表'
   ROW_FORMAT = DYNAMIC;
@@ -71,13 +72,21 @@ CREATE TABLE `comment`
 -- Records of comment
 -- ----------------------------
 INSERT INTO `comment`
-VALUES (1, '写的好棒', 3, 1, 3, 0, '2023-06-16 19:42:28', '2023-06-18 12:40:12', 0);
+VALUES (1, '写的好棒', 3, 1, 0, '2023-06-16 19:42:28', '2023-06-18 12:40:12', 0);
 INSERT INTO `comment`
-VALUES (2, '不错不错', 1, 1, 2, 0, '2023-06-16 21:10:28', '2023-06-18 12:40:12', 0);
+VALUES (2, '不错不错', 1, 1, 0, '2023-06-16 21:10:28', '2023-06-18 12:40:12', 0);
 INSERT INTO `comment`
-VALUES (4, '祝我们安好', 1, 2, 0, 0, '2023-06-16 21:25:12', '2023-06-16 21:25:12', 0);
+VALUES (4, '祝我们安好', 1, 2, 0, '2023-06-16 21:25:12', '2023-06-16 21:25:12', 0);
 INSERT INTO `comment`
-VALUES (5, '写的可以的', 1, 1, 0, 2, '2023-06-16 21:10:47', '2023-06-18 10:36:23', 2);
+VALUES (5, '写的可以的', 1, 1, 2, '2023-06-16 21:10:47', '2023-06-18 14:32:22', 0);
+INSERT INTO `comment`
+VALUES (6, '继续加油', 1, 1, 2, '2023-06-18 14:32:00', '2023-06-18 14:34:32', 1);
+INSERT INTO `comment`
+VALUES (7, '继续加油', 1, 1, 0, '2023-06-18 14:35:38', '2023-06-18 14:35:38', 0);
+INSERT INTO `comment`
+VALUES (8, '测试成功', 1, 27, 0, '2023-06-19 17:16:58', '2023-06-19 17:16:58', 0);
+INSERT INTO `comment`
+VALUES (9, '你好啊，欢迎欢迎', 1, 6, 0, '2023-06-20 08:49:14', '2023-06-20 08:49:27', 1);
 
 -- ----------------------------
 -- Table structure for favorite
@@ -88,12 +97,12 @@ CREATE TABLE `favorite`
     `id`       bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
     `user_id`  bigint NOT NULL COMMENT '用户id',
     `favor_id` bigint NOT NULL COMMENT '被点赞对象id',
-    `type`     int    NULL DEFAULT NULL COMMENT '点赞类型（0:文章 1:评论）'
-        PRIMARY KEY (`id`) USING BTREE,
+    `type`     int    NULL DEFAULT NULL COMMENT '点赞类型（0:文章 1:评论）',
+    PRIMARY KEY (`id`) USING BTREE,
     INDEX `user_id` (`user_id`) USING BTREE,
     CONSTRAINT `favorite_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 1
+  AUTO_INCREMENT = 11
   CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT = '点赞表'
   ROW_FORMAT = DYNAMIC;
@@ -101,6 +110,14 @@ CREATE TABLE `favorite`
 -- ----------------------------
 -- Records of favorite
 -- ----------------------------
+INSERT INTO `favorite`
+VALUES (4, 1, 2, 1);
+INSERT INTO `favorite`
+VALUES (8, 1, 6, 1);
+INSERT INTO `favorite`
+VALUES (9, 1, 1, 1);
+INSERT INTO `favorite`
+VALUES (10, 1, 8, 1);
 
 -- ----------------------------
 -- Table structure for follow
@@ -114,7 +131,7 @@ CREATE TABLE `follow`
     `is_deleted`  tinyint NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
     PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 16
+  AUTO_INCREMENT = 19
   CHARACTER SET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户关注'
   ROW_FORMAT = DYNAMIC;
@@ -129,7 +146,7 @@ VALUES (3, 1, 4, 0);
 INSERT INTO `follow`
 VALUES (10, 1, 2, 0);
 INSERT INTO `follow`
-VALUES (15, 2, 1, 0);
+VALUES (18, 2, 1, 0);
 
 -- ----------------------------
 -- Table structure for post
@@ -147,6 +164,7 @@ CREATE TABLE `post`
     `favor`       bigint                                                  NOT NULL DEFAULT 0 COMMENT '点赞',
     `top`         bit(1)                                                  NOT NULL DEFAULT b'0' COMMENT '是否置顶，1-是，0-否',
     `essence`     bit(1)                                                  NOT NULL DEFAULT b'0' COMMENT '是否加精，1-是，0-否',
+    `anonymous`   tinyint(1)                                              NOT NULL DEFAULT 0 COMMENT '匿名',
     `section_id`  int                                                     NULL     DEFAULT 0 COMMENT '专栏ID',
     `create_time` datetime                                                NOT NULL DEFAULT 'now()' COMMENT '发布时间',
     `update_time` datetime                                                NULL     DEFAULT 'now()' ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
@@ -155,7 +173,7 @@ CREATE TABLE `post`
     INDEX `user_id` (`user_id`) USING BTREE,
     INDEX `create_time` (`create_time`) USING BTREE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 25
+  AUTO_INCREMENT = 32
   CHARACTER SET = utf8
   COLLATE = utf8_general_ci COMMENT = '话题表'
   ROW_FORMAT = DYNAMIC;
@@ -164,56 +182,84 @@ CREATE TABLE `post`
 -- Records of post
 -- ----------------------------
 INSERT INTO `post`
-VALUES (1, '1', '12\n2\n\n', '2', 0, 1, 106, 0, b'0', b'0', 0, '2020-12-01 00:29:01', '2023-06-18 12:41:14', 0);
+VALUES (1, 'hello啊大家好',
+        ':eyes:️\n\n> 给大家看看我的新头像\n\n![53a3584b7f4460f2c6e229a2b5432a93.jpg](http://rw61twimb.hb-bkt.clouddn.com/community/fa98327347ad4012b9c2ec3e46a3a95c.jpg)\n\n\n\n',
+        '2', 0, 1, 175, 0, b'0', b'0', 0, 0, '2020-12-01 00:29:01', '2023-06-20 08:39:40', 0);
 INSERT INTO `post`
 VALUES (2, '2023 健康，快乐',
         '<p>2023的`FLAG`</p><p><br></p><p>1. 技能进步</p><p>2. 没有烦恼</p><p>3. 发财 :smile:</p><p><br></p><p><br></p>',
-        '1', 0, 0, 24, 0, b'0', b'0', 0, '2021-01-13 22:27:21', '2023-06-16 21:24:49', 1);
+        '15', 0, 0, 30, 0, b'0', b'0', 0, 0, '2021-01-13 22:27:21', '2023-06-19 16:02:02', 0);
 INSERT INTO `post`
-VALUES (3, 'hello，spring-security', ':hibiscus: spring-security\n\n', '1', 0, 0, 46, 0, b'0', b'0', 0,
-        '2020-12-03 20:56:51', '2020-12-03 20:56:51', 0);
+VALUES (3, 'hello，spring-security', ':hibiscus: spring-security\n\n', '1', 0, 0, 55, 0, b'0', b'0', 0, 0,
+        '2020-12-03 20:56:51', '2023-06-19 08:56:51', 0);
 INSERT INTO `post`
-VALUES (4, '哈哈哈，helloworld', '这是第一篇哦\n\n> hi :handshake: 你好\n\n`hello world`\n\n:+1: 很好\n', '1', 0, 0, 29,
-        0, b'0', b'0', 1, '2020-11-28 19:40:02', '2023-06-15 19:25:18', 1);
+VALUES (4, '哈哈哈，helloworld', '这是第一篇哦\n\n> hi :handshake: 你好\n\n`hello world`\n\n:+1: 很好\n', '3', 0, 0, 30,
+        0, b'0', b'0', 0, 1, '2020-11-28 19:40:02', '2023-06-19 23:22:51', 0);
 INSERT INTO `post`
-VALUES (5, '哈哈哈，换了个dark主题', '主题更换为Dark\n\n', '1', 0, 0, 6, 0, b'0', b'0', 0, '2020-11-30 23:27:00',
-        '2020-11-30 23:27:00', 0);
+VALUES (5, '哈哈哈，换了个dark主题', '主题更换为Dark\n\n', '1', 0, 0, 14, 0, b'0', b'0', 0, 0, '2020-11-30 23:27:00',
+        '2023-06-18 20:49:23', 0);
 INSERT INTO `post`
-VALUES (6, '嘿嘿，测试一下啊', '大家好\n`Hello everyone!`\n\n\n\n', '1', 0, 0, 7, 0, b'0', b'0', 0,
-        '2020-12-01 15:04:26', '2020-12-01 16:49:14', 0);
+VALUES (6, '嘿嘿，测试一下啊', '大家好\n`Hello everyone!`\n\n\n\n', '4', 0, 0, 17, 0, b'0', b'0', 0, 0,
+        '2020-12-01 15:04:26', '2023-06-20 08:49:28', 0);
 INSERT INTO `post`
-VALUES (7, '我要发财', '2021 冲冲冲！！！\n\n', '1', 0, 0, 94, 0, b'0', b'0', 2, '2020-11-28 21:47:16',
-        '2020-11-30 19:40:22', 0);
+VALUES (7, '我要发财', '2021 冲冲冲！！！\n\n', '1', 0, 0, 100, 0, b'0', b'0', 0, 2, '2020-11-28 21:47:16',
+        '2023-06-19 23:21:41', 0);
 INSERT INTO `post`
-VALUES (9, '权限部分 OK', '1. 创建 ok\n2. 修改 ok\n3. 删除 ok\n\n', '1', 0, 0, 17, 0, b'0', b'0', 0,
-        '2021-01-14 16:16:49', '2021-01-14 16:18:53', 1);
+VALUES (9, '权限部分 OK', '1. 创建 ok\n2. 修改 ok\n3. 删除 ok\n\n', '5', 0, 0, 27, 0, b'0', b'0', 0, 0,
+        '2021-01-14 16:16:49', '2023-06-20 08:39:54', 0);
 INSERT INTO `post`
-VALUES (10, '测试', '测试\n\n', '1', 0, 0, 38, 0, b'0', b'0', 0, '2020-12-01 15:35:34', '2020-12-01 15:35:34', 0);
+VALUES (10, '测试', '测试\n\n', '1', 0, 0, 39, 0, b'0', b'0', 0, 0, '2020-12-01 15:35:34', '2023-06-18 17:11:55', 1);
 INSERT INTO `post`
 VALUES (11, '聚合查询并统计',
         '* [x] SQL：\n\n```sql\nSELECT s.*,\nCOUNT(t.id) AS topics\nFROM section s\nLEFT JOIN topic t\nON s.id = t.section_id\nGROUP BY s.title\n```\n\n',
-        '1', 0, 0, 55, 0, b'0', b'0', 1, '2020-11-28 21:42:16', '2020-11-29 15:00:42', 0);
+        '1', 0, 0, 58, 0, b'0', b'0', 0, 1, '2020-11-28 21:42:16', '2023-06-19 23:21:36', 0);
 INSERT INTO `post`
 VALUES (12, '视频嵌入',
         ':+1:\n\n[https://www.bilibili.com/video/BV1w64y1f7w3](https://www.bilibili.com/video/BV1w64y1f7w3)\n\n[1](https://www.bilibili.com/video/BV1tp4y1x72w)\n\n```\n.vditor-reset pre > code\n```\n\n```\npublic class HelloWorld {\n\npublic static void main(String[] args) {\n    System.out.println(\"Hello World!\");\n}\n}\n```\n\n',
-        '1', 0, 0, 41, 0, b'0', b'0', 0, '2020-12-05 17:12:16', '2021-01-14 13:06:16', 0);
+        '5', 0, 0, 55, 0, b'0', b'0', 0, 0, '2020-12-05 17:12:16', '2023-06-19 00:08:59', 0);
 INSERT INTO `post`
-VALUES (18, '111', '<pre><code >1111</code></pre><p><br></p>', '1', 0, 0, 0, 0, b'0', b'0', 0, '2023-06-12 20:12:49',
+VALUES (18, '111', '<pre><code >1111</code></pre><p><br></p>', '1', 0, 0, 0, 0, b'0', b'0', 0, 0, '2023-06-12 20:12:49',
         '2023-06-12 20:12:49', 1);
 INSERT INTO `post`
 VALUES (21, '权限部分 OK!', '<p>1. 创建 ok</p><p>2. 修改 ok</p><p>3. 删除 ok</p><p><br></p><p><br></p>', '1', 0, 0, 0,
-        0, b'0', b'0', 0, '2023-06-12 20:45:12', '2023-06-12 20:45:12', 1);
+        0, b'0', b'0', 0, 0, '2023-06-12 20:45:12', '2023-06-12 20:45:12', 1);
 INSERT INTO `post`
 VALUES (22, '权限部分 OK!',
         '<p>1. 创建 ok</p><p>2. 修改 ok</p><p>3. 删除 ok</p><p><br></p><div data-w-e-type=\"video\" data-w-e-is-void>\n<video poster=\"\" controls=\"true\" width=\"auto\" height=\"auto\"><source src=\"https://www.bilibili.com/video/BV1Am4y1v745\" /></video>\n</div><p><br></p>',
-        '2', 0, 0, 0, 0, b'1', b'0', 0, '2023-06-12 20:46:42', '2023-06-15 19:52:07', 1);
+        '5', 0, 0, 0, 0, b'1', b'0', 0, 0, '2023-06-12 20:46:42', '2023-06-18 23:58:09', 1);
 INSERT INTO `post`
-VALUES (23, '现在是2023年6月15日20:36:37',
-        '<p>我在课设课上写课设，不知道该写什么课设</p><p>:sob::sob::cry:</p><p><a href=\"http://www.baidu.com\" target=\"_blank\">怎么办呢</a></p>',
-        '1', 0, 0, 4, 0, b'0', b'0', 0, '2023-06-15 20:37:49', '2023-06-16 21:23:10', 0);
+VALUES (23, '现在是2023年6月15日20:36:37', '**课设好难啊，不知道写啥**\n\n---\n\n:confused: 哎，写的好像还行\n\n', '1', 0,
+        0, 65, 0, b'0', b'0', 0, 0, '2023-06-15 20:37:49', '2023-06-19 23:22:40', 0);
 INSERT INTO `post`
-VALUES (24, '我爱黎铭杰', '<p>我是lhy</p>', '1', 0, 0, 0, 0, b'0', b'0', 0, '2023-06-16 18:46:25',
-        '2023-06-16 18:49:35', 1);
+VALUES (24, '我爱黎铭杰', '<p>我是lhy</p>', '15', 0, 0, 0, 0, b'0', b'0', 0, 0, '2023-06-16 18:46:25',
+        '2023-06-19 00:10:41', 1);
+INSERT INTO `post`
+VALUES (25, '测试css', '##### 123\n\n---\n\n1. 首先，点个赞\n\n:+1:\n\n', '1', 0, 0, 24, 0, b'0', b'0', 0, 0,
+        '2023-06-18 20:08:20', '2023-06-19 23:21:45', 0);
+INSERT INTO `post`
+VALUES (26, '测试vditor', '你好\n:smile:\n\n### hi\n\n* [ ] 123\n  qw\n\n> qw\n> qw`d`\n\n', '15', 0, 0, 6, 0, b'0',
+        b'0', 0, 0, '2023-06-18 20:50:12', '2023-06-19 00:12:11', 1);
+INSERT INTO `post`
+VALUES (27, '测试文件上传',
+        '![29aeb9db309305157567c237ceede3e0.jpeg](http://rw61twimb.hb-bkt.clouddn.com/community/86d7d8f536954338aff5cc3d08dbdf6b.jpeg)\n\n123\n[20230618224644812.mp4](http://rw61twimb.hb-bkt.clouddn.com/community/6744ad8ec1a74e92a6fd657d43ce58e9.mp4)\n[Java.md](http://rw61twimb.hb-bkt.clouddn.com/community/44de20ee0de644b78966d7bfa0c33663.md)\n\n',
+        '1', 0, 0, 32, 0, b'0', b'0', 0, 0, '2023-06-18 22:40:59', '2023-06-20 08:39:48', 0);
+INSERT INTO `post`
+VALUES (28, '我也来发个帖子',
+        '* [ ] 我的新头像\n\n:tada:️\n\n![53a3584b7f4460f2c6e229a2b5432a93.jpg](http://rw61twimb.hb-bkt.clouddn.com/community/87943f7df2954c7aa0e7e799e06d625c.jpg)\n\n',
+        '15', 0, 0, 30, 0, b'0', b'0', 0, 0, '2023-06-19 00:03:29', '2023-06-19 23:19:10', 0);
+INSERT INTO `post`
+VALUES (29, '大家好，我是新来的',
+        '冒个泡。。。\n\n![694ed4f96a14ca2299711140fdafc39b.jpg](http://rw61twimb.hb-bkt.clouddn.com/community/837e20e8ee47439792d2836104e69617.jpg)\n',
+        '3', 0, 0, 60, 0, b'0', b'0', 0, 0, '2023-06-19 00:04:52', '2023-06-20 09:40:21', 0);
+INSERT INTO `post`
+VALUES (30, '测试一下标签啊', '这里是测试数据\n\n', '1', 0, 0, 3, 0, b'0', b'0', 0, 0, '2023-06-19 08:39:22',
+        '2023-06-19 08:41:34', 1);
+INSERT INTO `post`
+VALUES (31, '测试', '测试一下删除标签\n', '1', 0, 0, 1, 0, b'0', b'0', 0, 0, '2023-06-19 08:47:07',
+        '2023-06-19 08:47:21', 1);
+INSERT INTO `post`
+VALUES (32, '测试一下匿名功能', '测试测试\n\n', '1', 0, 0, 21, 0, b'0', b'0', 1, 0, '2023-06-20 09:35:18',
+        '2023-06-20 10:59:34', 0);
 
 -- ----------------------------
 -- Table structure for post_tag
@@ -231,7 +277,7 @@ CREATE TABLE `post_tag`
     CONSTRAINT `post_tag_ibfk_1` FOREIGN KEY (`tag_id`) REFERENCES `tag` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT `post_tag_ibfk_2` FOREIGN KEY (`topic_id`) REFERENCES `post` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 79
+  AUTO_INCREMENT = 110
   CHARACTER SET = utf8
   COLLATE = utf8_general_ci COMMENT = '话题-标签 中间表'
   ROW_FORMAT = DYNAMIC;
@@ -240,25 +286,17 @@ CREATE TABLE `post_tag`
 -- Records of post_tag
 -- ----------------------------
 INSERT INTO `post_tag`
-VALUES (52, 1, 1, 0);
+VALUES (99, 17, 27, 0);
 INSERT INTO `post_tag`
-VALUES (53, 2, 9, 0);
+VALUES (102, 19, 3, 0);
 INSERT INTO `post_tag`
-VALUES (60, 7, 18, 0);
+VALUES (106, 14, 1, 0);
 INSERT INTO `post_tag`
-VALUES (65, 2, 21, 0);
+VALUES (108, 7, 25, 0);
 INSERT INTO `post_tag`
-VALUES (73, 2, 22, 0);
+VALUES (109, 18, 23, 0);
 INSERT INTO `post_tag`
-VALUES (74, 9, 23, 0);
-INSERT INTO `post_tag`
-VALUES (75, 10, 24, 0);
-INSERT INTO `post_tag`
-VALUES (76, 11, 24, 0);
-INSERT INTO `post_tag`
-VALUES (77, 12, 24, 0);
-INSERT INTO `post_tag`
-VALUES (78, 13, 2, 0);
+VALUES (114, 7, 32, 0);
 
 -- ----------------------------
 -- Table structure for promotion
@@ -294,17 +332,21 @@ VALUES (3, '掘金', 'https://juejin.cn/', '掘金', 0);
 DROP TABLE IF EXISTS `sys_dept`;
 CREATE TABLE `sys_dept`
 (
-    `id`        bigint                                                       NOT NULL AUTO_INCREMENT,
-    `name`      varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '部门名称',
-    `parent_id` bigint                                                       NULL     DEFAULT 0 COMMENT '上级部门id',
-    `sort`      int                                                          NULL     DEFAULT 1 COMMENT '排序',
-  `principal` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '负责人',
-  `status` tinyint(1) NULL DEFAULT 1 COMMENT '状态（1正常 0停用）',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `update_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `is_deleted` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '组织机构' ROW_FORMAT = COMPACT;
+    `id`          bigint                                                        NOT NULL AUTO_INCREMENT,
+    `name`        varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  NOT NULL DEFAULT '' COMMENT '部门名称',
+    `parent_id`   bigint                                                        NULL     DEFAULT 0 COMMENT '上级部门id',
+    `sort`        int                                                           NULL     DEFAULT 1 COMMENT '排序',
+    `principal`   varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '负责人',
+    `status`      tinyint(1)                                                    NULL     DEFAULT 1 COMMENT '状态（1正常 0停用）',
+    `create_time` timestamp                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `update_time` timestamp                                                     NULL     DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `is_deleted`  tinyint                                                       NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 10
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci COMMENT = '组织机构'
+  ROW_FORMAT = COMPACT;
 
 -- ----------------------------
 -- Records of sys_dept
@@ -323,16 +365,21 @@ INSERT INTO `sys_dept` VALUES (9, '经济贸易学院', 1, 3, '王倩倩', 1, '2
 -- Table structure for sys_role
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_role`;
-CREATE TABLE `sys_role`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '角色id',
-  `name` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '角色名称',
-  `code` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '角色编码',
-  `remark` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '描述',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `is_deleted` tinyint NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '角色' ROW_FORMAT = DYNAMIC;
+CREATE TABLE `sys_role`
+(
+    `id`          bigint                                                  NOT NULL AUTO_INCREMENT COMMENT '角色id',
+    `name`        varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci  NOT NULL DEFAULT '' COMMENT '角色名称',
+    `code`        varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci  NULL     DEFAULT NULL COMMENT '角色编码',
+    `remark`      varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL     DEFAULT NULL COMMENT '描述',
+    `create_time` timestamp                                               NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` timestamp                                               NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_deleted`  tinyint                                                 NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 5
+  CHARACTER SET = utf8
+  COLLATE = utf8_general_ci COMMENT = '角色'
+  ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_role
@@ -342,7 +389,11 @@ VALUES (1, '系统管理员', 'admin', '系统管理员', '2021-05-31 18:09:18',
 INSERT INTO `sys_role`
 VALUES (2, '普通管理员', 'common', '普通管理员', '2021-06-01 08:38:40', '2023-05-26 22:46:25', 0);
 INSERT INTO `sys_role`
-VALUES (3, '用户管理员', 'yhgly', '用户管理员', '2022-06-08 17:39:04', '2022-06-08 17:39:04', 0);
+VALUES (3, '用户管理员', 'manager', '用户管理员', '2022-06-08 17:39:04', '2023-06-19 17:28:09', 0);
+INSERT INTO `sys_role`
+VALUES (4, '审帖员', 'article', '审帖员，审核帖子是否违规', '2023-06-19 17:19:08', '2023-06-19 17:19:08', 0);
+INSERT INTO `sys_role`
+VALUES (5, '审核员', 'tip', '每日一句审核员', '2023-06-20 10:56:34', '2023-06-20 10:56:34', 0);
 
 -- ----------------------------
 -- Table structure for sys_user
@@ -376,31 +427,28 @@ CREATE TABLE `sys_user`
 -- ----------------------------
 INSERT INTO `sys_user`
 VALUES (1, 'admin', '96e79218965eb72c92a549dd5a330112', 'admin', 'admin@qq.com', 1,
-        'http://r61cnlsfq.hn-bkt.clouddn.com/7daa4595-dfde-45da-8513-c5c2b81d20cc', 1, 'admin', 1,
-        '2021-05-31 18:08:43', '2023-05-30 22:43:33', 0);
+        'http://rw61twimb.hb-bkt.clouddn.com/community/a764f24707b84996b81b2285827f903c.jpeg', 1, 'admin', 1,
+        '2021-05-31 18:08:43', '2023-06-20 08:42:36', 0);
 INSERT INTO `sys_user`
 VALUES (2, '王倩倩', '96e79218965eb72c92a549dd5a330112', '王倩倩', 'wqq@qq.com', 0,
-        'http://r61cnlsfq.hn-bkt.clouddn.com/b09b3467-3d99-437a-bd2e-dd8c9be92bb8', 2, '111', 1, '2022-02-08 10:35:38',
-        '2023-05-30 22:43:33', 0);
+        'http://rw61twimb.hb-bkt.clouddn.com/headphoto/29aeb9db309305157567c237ceede3e0.jpeg', 2, '111', 1,
+        '2022-02-08 10:35:38', '2023-06-18 15:25:53', 0);
 INSERT INTO `sys_user`
-VALUES (3, '王刚', '96e79218965eb72c92a549dd5a330112', '王刚', 'wanggang@qq.com', 1, NULL, 3, '222', 0,
-        '2022-05-24 11:05:40', '2023-05-30 22:43:33', 0);
+VALUES (3, '王刚', '96e79218965eb72c92a549dd5a330112', '王刚', 'wanggang@qq.com', 1,
+        'http://rw61twimb.hb-bkt.clouddn.com/694ed4f96a14ca2299711140fdafc39b.jpg', 5, '222', 1, '2022-05-24 11:05:40',
+        '2023-06-19 17:19:30', 0);
 INSERT INTO `sys_user`
-VALUES (4, 'authTest', '96e79218965eb72c92a549dd5a330112', 'authTest', 'auth@qq.com', 1, NULL, 4, '333', 1,
-        '2023-05-10 23:19:32', '2023-05-30 22:43:33', 0);
+VALUES (4, 'authTest', '96e79218965eb72c92a549dd5a330112', 'authTest', 'auth@qq.com', 1,
+        'http://rw61twimb.hb-bkt.clouddn.com/community/473b478ca2bf4bb49cafd1e4a13a94d5.jpeg', 9, '333', 1,
+        '2023-05-10 23:19:32', '2023-06-19 17:25:16', 0);
 INSERT INTO `sys_user`
-VALUES (5, 'nice', '96e79218965eb72c92a549dd5a330112', '未设置昵称', 'nice@qq.com', 0,
-        'http://r61cnlsfq.hn-bkt.clouddn.com/b09b3467-3d99-437a-bd2e-dd8c9be92bb8', 5, 'nice', 1, '2023-06-04 16:08:58',
-        '2023-06-05 16:40:02', 0);
+VALUES (5, 'nice', '96e79218965eb72c92a549dd5a330112', 'nice', 'nice@qq.com', 0,
+        'http://rw61twimb.hb-bkt.clouddn.com/community/0c1383239cbc4a6f80dde19e7d9cf2b0.jpeg', 9, 'nice', 1,
+        '2023-06-04 16:08:58', '2023-06-20 10:56:53', 0);
 INSERT INTO `sys_user`
-VALUES (13, '111', 'e10adc3949ba59abbe56e057f20f883e', '未设置昵称', '1612702983@qq.com', 0, NULL, 1, '1', 1,
-        '2023-06-05 16:20:00', '2023-06-05 16:20:11', 1);
-INSERT INTO `sys_user`
-VALUES (14, '1', 'e10adc3949ba59abbe56e057f20f883e', '未设置昵称', '1612702983@qq.com', 0, NULL, 1, '1', 1,
-        '2023-06-05 16:23:56', '2023-06-05 16:24:09', 1);
-INSERT INTO `sys_user`
-VALUES (15, '经贸小弟弟', 'e10adc3949ba59abbe56e057f20f883e', '未设置昵称', 'good@qq.com', 1, NULL, 9, '经贸小弟弟', 1,
-        '2023-06-05 16:47:48', '2023-06-05 16:47:48', 0);
+VALUES (15, '小弟弟', '96e79218965eb72c92a549dd5a330112', '小弟弟', 'liyuanhaovip@163.com', 1,
+        'http://rw61twimb.hb-bkt.clouddn.com/community/03fa9270e8934e579efc007e4eb9b6c7.jpg', 9, '经贸小弟弟', 1,
+        '2023-06-05 16:47:48', '2023-06-20 10:50:21', 0);
 
 -- ----------------------------
 -- Table structure for sys_user_role
@@ -420,7 +468,7 @@ CREATE TABLE `sys_user_role`
     CONSTRAINT `sys_user_role_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
     CONSTRAINT `sys_user_role_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 10
+  AUTO_INCREMENT = 14
   CHARACTER SET = utf8
   COLLATE = utf8_general_ci COMMENT = '用户角色'
   ROW_FORMAT = DYNAMIC;
@@ -433,19 +481,25 @@ VALUES (1, 1, 1, '2022-01-20 20:49:37', '2023-06-05 16:25:44', 1);
 INSERT INTO `sys_user_role`
 VALUES (2, 1, 2, '2022-05-19 10:37:27', '2022-05-24 16:55:53', 1);
 INSERT INTO `sys_user_role`
-VALUES (3, 1, 14, '2023-06-05 16:23:56', '2023-06-05 16:24:09', 1);
+VALUES (5, 1, 1, '2023-06-05 16:25:44', '2023-06-19 17:22:12', 1);
 INSERT INTO `sys_user_role`
-VALUES (4, 2, 14, '2023-06-05 16:23:56', '2023-06-05 16:24:09', 1);
+VALUES (6, 2, 1, '2023-06-05 16:25:44', '2023-06-19 17:22:12', 1);
 INSERT INTO `sys_user_role`
-VALUES (5, 1, 1, '2023-06-05 16:25:44', '2023-06-05 16:25:44', 0);
-INSERT INTO `sys_user_role`
-VALUES (6, 2, 1, '2023-06-05 16:25:44', '2023-06-05 16:25:44', 0);
-INSERT INTO `sys_user_role`
-VALUES (7, 3, 1, '2023-06-05 16:25:44', '2023-06-05 16:25:44', 0);
+VALUES (7, 3, 1, '2023-06-05 16:25:44', '2023-06-19 17:22:12', 1);
 INSERT INTO `sys_user_role`
 VALUES (8, 1, 5, '2023-06-05 16:28:02', '2023-06-05 16:28:34', 1);
 INSERT INTO `sys_user_role`
 VALUES (9, 1, 5, '2023-06-05 16:28:34', '2023-06-05 16:31:20', 1);
+INSERT INTO `sys_user_role`
+VALUES (10, 4, 3, '2023-06-19 17:19:30', '2023-06-19 17:19:30', 0);
+INSERT INTO `sys_user_role`
+VALUES (11, 1, 1, '2023-06-19 17:22:12', '2023-06-19 17:22:12', 0);
+INSERT INTO `sys_user_role`
+VALUES (12, 2, 2, '2023-06-19 17:25:10', '2023-06-19 17:25:10', 0);
+INSERT INTO `sys_user_role`
+VALUES (13, 3, 4, '2023-06-19 17:25:16', '2023-06-19 17:25:16', 0);
+INSERT INTO `sys_user_role`
+VALUES (14, 5, 5, '2023-06-20 10:56:53', '2023-06-20 10:56:53', 0);
 
 -- ----------------------------
 -- Table structure for tag
@@ -460,7 +514,7 @@ CREATE TABLE `tag`
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE INDEX `name` (`name`) USING BTREE
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 14
+  AUTO_INCREMENT = 20
   CHARACTER SET = utf8
   COLLATE = utf8_general_ci COMMENT = '标签表'
   ROW_FORMAT = DYNAMIC;
@@ -469,17 +523,7 @@ CREATE TABLE `tag`
 -- Records of tag
 -- ----------------------------
 INSERT INTO `tag`
-VALUES (1, 'java', 1, 0);
-INSERT INTO `tag`
-VALUES (2, 'css', 10, 0);
-INSERT INTO `tag`
-VALUES (3, 'mongodb', 0, 0);
-INSERT INTO `tag`
-VALUES (4, 'python', 0, 0);
-INSERT INTO `tag`
-VALUES (5, 'vue', 0, 0);
-INSERT INTO `tag`
-VALUES (7, '测试', 1, 0);
+VALUES (7, '测试', 2, 0);
 INSERT INTO `tag`
 VALUES (8, '管理员', 0, 0);
 INSERT INTO `tag`
@@ -487,11 +531,21 @@ VALUES (9, '课程设计', 0, 0);
 INSERT INTO `tag`
 VALUES (10, '爱情', 0, 0);
 INSERT INTO `tag`
-VALUES (11, '男女', 0, 0);
-INSERT INTO `tag`
 VALUES (12, '校园', 0, 0);
 INSERT INTO `tag`
 VALUES (13, '祝福', 0, 0);
+INSERT INTO `tag`
+VALUES (14, '新人报道', 1, 0);
+INSERT INTO `tag`
+VALUES (15, '小帅哥', 0, 0);
+INSERT INTO `tag`
+VALUES (16, '标签', 0, 0);
+INSERT INTO `tag`
+VALUES (17, '照片墙', 1, 0);
+INSERT INTO `tag`
+VALUES (18, '时间', 1, 0);
+INSERT INTO `tag`
+VALUES (19, '新鲜', 1, 0);
 
 -- ----------------------------
 -- Table structure for tip
@@ -547,5 +601,38 @@ VALUES (13, '如果不是怕别人反感，女人决不会保持完整的严肃�
         '2023-06-06 11:14:04');
 INSERT INTO `tip`
 VALUES (24864, '读书百遍,其义自见', 'admin', '朱熹', 0, '2023-06-06 15:52:47', '2023-06-06 15:53:02');
+INSERT INTO `tip`
+VALUES (24867, '欲买桂花同载酒，终不似，少年游。', '匿名', '刘过', 0, '2023-06-20 10:52:16', '2023-06-20 10:52:16');
+
+-- ----------------------------
+-- Table structure for tip_post
+-- ----------------------------
+DROP TABLE IF EXISTS `tip_post`;
+CREATE TABLE `tip_post`
+(
+    `id`          bigint                                                   NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `author`      varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci   NOT NULL DEFAULT '' COMMENT '作者',
+    `content`     varchar(1000) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT '内容',
+    `postman`     varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci   NOT NULL DEFAULT '' COMMENT '投稿人',
+    `postman_id`  bigint                                                   NOT NULL DEFAULT 1 COMMENT '投稿人ID',
+    `post_time`   datetime                                                 NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '投稿时间',
+    `is_accepted` tinyint                                                  NOT NULL DEFAULT 0 COMMENT '是否采纳（0:未处理 1:已采纳 2:已拒绝）',
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB
+  CHARACTER SET = utf8
+  COLLATE = utf8_general_ci
+  ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of tip_post
+-- ----------------------------
+INSERT INTO `tip_post`
+VALUES (1, '杜甫', '读书破万卷，下笔如有神', '匿名', 1, '2023-06-20 10:06:35', 0);
+INSERT INTO `tip_post`
+VALUES (3, '刘禹锡', '今日听君歌一曲,暂凭杯酒长精神', '匿名', 1, '2023-06-20 10:10:07', 0);
+INSERT INTO `tip_post`
+VALUES (4, '刘过', '欲买桂花同载酒，终不似，少年游。', '匿名', 15, '2023-06-20 10:51:36', 1);
+INSERT INTO `tip_post`
+VALUES (5, '111', '111', '111', 15, '2023-06-20 10:53:05', 2);
 
 SET FOREIGN_KEY_CHECKS = 1;

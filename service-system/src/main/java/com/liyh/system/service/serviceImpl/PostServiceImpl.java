@@ -1,5 +1,6 @@
 package com.liyh.system.service.serviceImpl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,6 +12,7 @@ import com.liyh.system.service.CommentService;
 import com.liyh.system.service.PostService;
 import com.liyh.system.service.TagService;
 import com.vdurmont.emoji.EmojiParser;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.List;
  * @Date 2023/6/5 17:47
  **/
 @Service
+@Slf4j
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
     @Autowired
     private PostMapper postMapper;
@@ -139,5 +142,48 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         tagService.deleteTopicTagByTopicId(id);
         // 删除帖子和评论的关联关系
         commentService.deleteCommentByPostId(id);
+    }
+
+    @Override
+    public List<Post> selectRandomPostByLike(String userId) {
+        return postMapper.selectRandomPostByLike(userId);
+    }
+
+    @Override
+    public List<Post> selectRandomPostByMy(String userId) {
+        return postMapper.selectRandomPostByMy(userId);
+    }
+
+    @Override
+    public void favor(String userId, Long id) {
+        postMapper.favor(userId, id);
+
+        // 获取帖子
+        Post post = postMapper.selectByPk(id);
+        post.setFavor(post.getFavor() + 1);
+        postMapper.update(post);
+    }
+
+    @Override
+    public void unfavor(String userId, Long id) {
+        postMapper.unfavor(userId, id);
+
+        // 获取帖子
+        Post post = postMapper.selectByPk(id);
+        post.setFavor(post.getFavor() - 1);
+        postMapper.update(post);
+    }
+
+    @Override
+    public boolean isFavor(String userId, Long id) {
+        return postMapper.isFavor(userId, id) > 0;
+    }
+
+    @Override
+    public void increaseShareCount(Long id) {
+        Post post = postMapper.selectByPk(id);
+        post.setForward(post.getForward() + 1);
+        log.info("转发量" + String.valueOf(post.getForward()));
+        postMapper.update(post);
     }
 }

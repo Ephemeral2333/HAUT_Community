@@ -58,8 +58,8 @@ public class Post extends BaseEntity implements Serializable {
     @TableField("essence")
     private boolean essence;
 
-    @TableField("section_id")
-    private Long sectionId;
+    @TableField("forward")
+    private Long forward;
 
     @TableField(exist = false)
     private UserVo author;

@@ -51,4 +51,16 @@ public interface PostService extends IService<Post> {
 
     // 删除帖子
     void deletePost(Long id);
+
+    List<Post> selectRandomPostByLike(String userId);
+
+    List<Post> selectRandomPostByMy(String userId);
+
+    void favor(String userId, Long id);
+
+    void unfavor(String userId, Long id);
+
+    boolean isFavor(String userId, Long id);
+
+    void increaseShareCount(Long id);
 }

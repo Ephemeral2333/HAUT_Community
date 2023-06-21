@@ -212,4 +212,39 @@ public class PostController {
         log.info("增加转发量成功");
         return Result.ok();
     }
+
+    @ApiOperation("获取收藏帖子")
+    @PostMapping("/post/my/{tab}")
+    public Result getMyCollects(@RequestBody Pagination pagination, HttpServletRequest request,
+                                @PathVariable String tab) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        Page<Post> page = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
+        IPage<Post> iPage;
+        if ("collect".equals(tab)) {
+            iPage = postService.selectPageByCollectUserId(page, userId);
+        } else {
+            iPage = postService.selectPageByLikeUserId(page, userId);
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("list", iPage.getRecords());
+        map.put("total", iPage.getTotal());
+        map.put("pageSize", iPage.getSize());
+        map.put("currentPage", iPage.getCurrent());
+        return Result.ok(map);
+    }
+
+    @ApiOperation("判断是否收藏帖子")
+    @GetMapping("/post/isCollect/{id}")
+    public Result isCollect(@PathVariable Long id, HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        return Result.ok(postService.isCollect(userId, id));
+    }
+
+    @ApiOperation("收藏或取消收藏")
+    @GetMapping("/post/collect/{id}")
+    public Result collect(@PathVariable Long id, HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        postService.collect(userId, id);
+        return Result.ok();
+    }
 }

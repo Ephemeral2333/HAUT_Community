@@ -55,6 +55,15 @@
             update_time = NOW()
         where id = #{id}
     </update>
+    <update id="updateProfile">
+        update sys_user
+        set nickname    = #{nickname},
+            description = #{description},
+            sex         = #{sex},
+            email       = #{email},
+            update_time = NOW()
+        where id = #{id}
+    </update>
 
     <select id="selectPage" resultMap="SysUserMap">
         select

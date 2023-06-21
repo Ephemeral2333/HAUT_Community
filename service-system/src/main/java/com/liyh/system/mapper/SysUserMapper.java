@@ -30,4 +30,6 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
     void updatePhoto(String url, Long id);
 
     String getEmailById(Long id);
+
+    void updateProfile(UserVo userVo);
 }

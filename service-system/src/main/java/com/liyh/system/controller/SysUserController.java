@@ -6,12 +6,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
+import com.liyh.common.utils.JwtHelper;
 import com.liyh.common.utils.MD5;
 import com.liyh.common.utils.VCodeUtil;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.SysRoleQueryVo;
 import com.liyh.model.vo.SysUserQueryVo;
+import com.liyh.model.vo.UserInfoCountVo;
 import com.liyh.system.service.EmailService;
 import com.liyh.system.service.SysUserService;
 import io.swagger.annotations.Api;
@@ -114,5 +116,13 @@ public class SysUserController {
     public Result resetPass(@PathVariable Long id) {
         sysUserService.resetPassword(id);
         return Result.ok();
+    }
+
+    @ApiOperation("获取用户统计信息")
+    @GetMapping("/count/info")
+    public Result<UserInfoCountVo> getUserInfoCount(HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        UserInfoCountVo userInfoCountVo = sysUserService.getUserInfoCount(userId);
+        return Result.ok(userInfoCountVo);
     }
 }

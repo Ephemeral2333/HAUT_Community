@@ -166,7 +166,8 @@
         where is_deleted = 0
           and id in (select favor_id
                      from favorite
-                     where favorite.user_id = #{id} and type = 2)
+                     where favorite.user_id = #{id}
+                       and type = 2)
         order by rand()
         limit 5
     </select>
@@ -184,5 +185,64 @@
         where user_id = #{userId}
           and favor_id = #{id}
           and type = 2
+    </select>
+    <select id="selectPageByCollectUserId" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        where id in (
+        select topic_id from collect
+        where collect.user_id = #{userId}
+        )
+        and is_deleted = 0
+        order by create_time desc
+    </select>
+    <select id="selectPageByLikeUserId" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
+        select
+        <include refid="columns"/>
+        from post
+        where id in (
+        select favor_id from favorite
+        where favorite.user_id = #{userId} and type = 2
+        )
+        and is_deleted = 0
+        order by create_time desc
+    </select>
+    <select id="isCollect" resultType="java.lang.Integer">
+        select count(*)
+        from collect
+        where user_id = #{userId}
+          and topic_id = #{id}
+    </select>
+    <select id="getArticleCountByUserId" resultType="java.lang.Integer">
+        select count(*)
+        from post
+        where user_id = #{userId}
+          and is_deleted = 0
+    </select>
+    <select id="getLikeCountByUserId" resultType="java.lang.Integer">
+        select count(*)
+        from post p
+        where p.id in (select favor_id
+                       from favorite
+                       where favor_id = p.id
+                         and type = 2)
+          and p.is_deleted = 0
+          and p.user_id = #{userId}
+    </select>
+    <select id="getCollectCountByUserId" resultType="java.lang.Integer">
+        select count(*)
+        from post p
+        where p.id in (select topic_id
+                       from collect
+                       where topic_id = p.id)
+          and p.is_deleted = 0
+          and p.user_id = #{userId}
+    </select>
+    <select id="getViewCountByUserId" resultType="java.lang.Integer">
+        select sum(view)
+        from post
+        where user_id = #{userId}
+          and is_deleted = 0
     </select>
 </mapper>

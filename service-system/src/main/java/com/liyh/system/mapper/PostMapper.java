@@ -47,4 +47,18 @@ public interface PostMapper extends BaseMapper<Post> {
     void unfavor(String userId, Long id);
 
     int isFavor(String userId, Long id);
+
+    IPage<Post> selectPageByCollectUserId(Page<Post> page, String userId);
+
+    IPage<Post> selectPageByLikeUserId(Page<Post> page, String userId);
+
+    int isCollect(String userId, Long id);
+
+    int getArticleCountByUserId(String userId);
+
+    int getLikeCountByUserId(String userId);
+
+    int getCollectCountByUserId(String userId);
+
+    int getViewCountByUserId(String userId);
 }

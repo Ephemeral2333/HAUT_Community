@@ -8,10 +8,8 @@ import com.liyh.common.utils.MD5;
 import com.liyh.model.system.SysRole;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.system.SysUserRole;
-import com.liyh.model.vo.FollowerVo;
-import com.liyh.model.vo.RegisterVo;
-import com.liyh.model.vo.SysUserQueryVo;
-import com.liyh.model.vo.UserVo;
+import com.liyh.model.vo.*;
+import com.liyh.system.mapper.PostMapper;
 import com.liyh.system.mapper.SysUserMapper;
 import com.liyh.system.mapper.SysUserRoleMapper;
 import com.liyh.system.service.SysUserService;
@@ -32,6 +30,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Autowired
     private SysUserRoleMapper sysUserRoleMapper;
+
+    @Autowired
+    private PostMapper postMapper;
 
     @Override
     public IPage<SysUser> selectPage(Page<SysUser> pageParam, SysUserQueryVo userQueryVo) {
@@ -119,5 +120,40 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public String getEmailById(Long postManId) {
         return sysUserMapper.getEmailById(postManId);
+    }
+
+    @Override
+    public void modifyPass(String pass, String userId) {
+        SysUser sysUser = sysUserMapper.selectById(userId);
+        sysUser.setPassword(MD5.encrypt(pass));
+        sysUserMapper.updateById(sysUser);
+    }
+
+    @Override
+    public void updateProfile(UserVo userVo) {
+        sysUserMapper.updateProfile(userVo);
+    }
+
+    @Override
+    public UserInfoCountVo getUserInfoCount(String userId) {
+        // 获取用户信息
+        String username = sysUserMapper.getNameById(Long.valueOf(userId));
+
+        String avatar = sysUserMapper.getAvatarById(Long.valueOf(userId));
+
+        // 获取用户文章总数
+        int articleCount = postMapper.getArticleCountByUserId(userId);
+
+        // 获取文章受赞总数
+        int likeCount = postMapper.getLikeCountByUserId(userId);
+
+        // 获取文章总收藏数
+        int collectCount = postMapper.getCollectCountByUserId(userId);
+
+        // 获取文章总阅览数
+        int viewCount = postMapper.getViewCountByUserId(userId);
+
+        return new UserInfoCountVo(Long.valueOf(userId), username,
+                articleCount, likeCount, collectCount, viewCount, avatar);
     }
 }

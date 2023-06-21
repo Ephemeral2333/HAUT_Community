@@ -1,5 +1,6 @@
 package com.liyh.system.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.liyh.common.result.Result;
 import com.liyh.common.result.ResultCodeEnum;
 import com.liyh.common.utils.JwtHelper;
@@ -119,10 +120,26 @@ public class IndexController {
 
     @ApiOperation("保存头像")
     @PostMapping("/savePhoto/{id}")
-    public Result saveAvatar(@RequestBody String url, @PathVariable("id") Long id) {
+    public Result saveAvatar(@RequestBody JsonNode jsonNode, @PathVariable("id") Long id) {
+        String url = jsonNode.get("url").asText();
         url = URLDecoder.decode(url);
-        url = url.substring(0, url.length() - 1);
         sysUserService.saveAvatar(url, id);
+        return Result.ok();
+    }
+
+    @ApiOperation("修改密码")
+    @PostMapping("/modify/password")
+    public Result modifyPass(@RequestParam("pass") String pass,
+                             HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        sysUserService.modifyPass(pass, userId);
+        return Result.ok();
+    }
+
+    @ApiOperation("修改个人信息")
+    @PostMapping("/update/profile")
+    public Result updateProfile(@RequestBody UserVo userVo) {
+        sysUserService.updateProfile(userVo);
         return Result.ok();
     }
 }

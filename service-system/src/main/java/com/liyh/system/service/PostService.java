@@ -63,4 +63,12 @@ public interface PostService extends IService<Post> {
     boolean isFavor(String userId, Long id);
 
     void increaseShareCount(Long id);
+
+    IPage<Post> selectPageByCollectUserId(Page<Post> page, String userId);
+
+    IPage<Post> selectPageByLikeUserId(Page<Post> page, String userId);
+
+    boolean isCollect(String userId, Long id);
+
+    void collect(String userId, Long id);
 }

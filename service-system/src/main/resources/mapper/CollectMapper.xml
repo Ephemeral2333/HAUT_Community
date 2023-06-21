@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.liyh.system.mapper.CollectMapper">
+
+    <delete id="unCollect">
+        delete
+        from collect
+        where user_id = #{userId}
+          and topic_id = #{id}
+    </delete>
+</mapper>

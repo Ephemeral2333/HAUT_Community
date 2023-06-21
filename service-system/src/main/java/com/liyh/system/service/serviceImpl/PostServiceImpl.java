@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.liyh.model.entity.Collect;
 import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tag;
 import com.liyh.model.vo.PostVo;
+import com.liyh.system.mapper.CollectMapper;
 import com.liyh.system.mapper.PostMapper;
 import com.liyh.system.service.CommentService;
 import com.liyh.system.service.PostService;
@@ -38,6 +40,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private CollectMapper collectMapper;
+
     @Override
     public IPage<Post> selectPageByHot(Page<Post> tip) {
         return postMapper.selectPageByHot(tip);
@@ -67,11 +72,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     /**
+     * @return com.liyh.model.entity.Post
      * @Author LiYH
      * @Description 获取帖子详情
      * @Date 22:27 2023/6/7
      * @Param [id]
-     * @return com.liyh.model.entity.Post
      **/
     @Override
     public Post selectByPk(Long id) {
@@ -185,5 +190,38 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         post.setForward(post.getForward() + 1);
         log.info("转发量" + String.valueOf(post.getForward()));
         postMapper.update(post);
+    }
+
+    @Override
+    public IPage<Post> selectPageByCollectUserId(Page<Post> page, String userId) {
+        return postMapper.selectPageByCollectUserId(page, userId);
+    }
+
+    @Override
+    public IPage<Post> selectPageByLikeUserId(Page<Post> page, String userId) {
+        return postMapper.selectPageByLikeUserId(page, userId);
+    }
+
+    @Override
+    public boolean isCollect(String userId, Long id) {
+        return postMapper.isCollect(userId, id) > 0;
+    }
+
+    @Override
+    public void collect(String userId, Long id) {
+        Post post = postMapper.selectByPk(id);
+        if (isCollect(userId, id)) {
+            post.setCollects(post.getCollects() - 1);
+            postMapper.update(post);
+            collectMapper.unCollect(userId, id);
+        } else {
+            post.setCollects(post.getCollects() + 1);
+            postMapper.update(post);
+            Collect collect = Collect.builder()
+                    .userId(Long.valueOf(userId))
+                    .topicId(id)
+                    .build();
+            collectMapper.insert(collect);
+        }
     }
 }

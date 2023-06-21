@@ -37,4 +37,14 @@ public interface PostMapper extends BaseMapper<Post> {
     IPage<Post> selectPageByTagId(Page<Post> postPage, Long id);
 
     IPage<Post> searchByKeyword(Page<Post> page, String keyword);
+
+    List<Post> selectRandomPostByLike(String id);
+
+    List<Post> selectRandomPostByMy(String userId);
+
+    void favor(String userId, Long id);
+
+    void unfavor(String userId, Long id);
+
+    int isFavor(String userId, Long id);
 }

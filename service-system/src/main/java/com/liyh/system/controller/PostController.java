@@ -167,4 +167,49 @@ public class PostController {
         map.put("user", userVo);
         return Result.ok(map);
     }
+
+    @ApiOperation("随机获取5个点赞的帖子")
+    @GetMapping("/post/like/random")
+    public Result getPostByLike(HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        return Result.ok(postService.selectRandomPostByLike(userId));
+    }
+
+    @ApiOperation("随机获取我的5个帖子")
+    @GetMapping("/post/my/random")
+    public Result getPostByMy(HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        return Result.ok(postService.selectRandomPostByMy(userId));
+    }
+
+    @ApiOperation("点赞帖子")
+    @GetMapping("/post/favor/{id}")
+    public Result favor(@PathVariable Long id, HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        postService.favor(userId, id);
+        return Result.ok();
+    }
+
+    @ApiOperation("判断是否点赞帖子")
+    @GetMapping("/post/isFavor/{id}")
+    public Result isFavor(@PathVariable Long id, HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        return Result.ok(postService.isFavor(userId, id));
+    }
+
+    @ApiOperation("取消点赞帖子")
+    @GetMapping("/post/unfavor/{id}")
+    public Result unfavor(@PathVariable Long id, HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        postService.unfavor(userId, id);
+        return Result.ok();
+    }
+
+    @ApiOperation("增加转发量")
+    @GetMapping("/post/increaseShareCount/{id}")
+    public Result increaseShareCount(@PathVariable Long id) {
+        postService.increaseShareCount(id);
+        log.info("增加转发量成功");
+        return Result.ok();
+    }
 }

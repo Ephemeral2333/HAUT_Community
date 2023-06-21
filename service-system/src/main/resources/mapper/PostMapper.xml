@@ -12,8 +12,12 @@
     </resultMap>
 
     <sql id="columns">
-        id,title,content,user_id,comments,collects,view,favor,top,essence,anonymous,section_id,create_time,update_time,is_deleted
+        id,title,content,user_id,comments,collects,view,favor,top,essence,forward,anonymous,create_time,update_time,is_deleted
     </sql>
+    <insert id="favor">
+        insert into favorite (user_id, favor_id, type)
+        values (#{userId}, #{id}, 2)
+    </insert>
     <update id="update">
         update post
         <set>
@@ -22,9 +26,6 @@
             </if>
             <if test="content != null and content != ''">
                 content = #{content},
-            </if>
-            <if test="sectionId != null">
-                section_id = #{sectionId},
             </if>
             <if test="top != null">
                 top = #{top},
@@ -41,6 +42,9 @@
             <if test="collects != null">
                 collects = #{collects},
             </if>
+            <if test="forward != null">
+                forward = #{forward},
+            </if>
             <if test="comments != null">
                 comments = #{comments},
             </if>
@@ -55,6 +59,13 @@
         set view = view + 1
         where id = #{id}
     </update>
+    <delete id="unfavor">
+        delete
+        from favorite
+        where user_id = #{userId}
+          and favor_id = #{id}
+          and type = 2
+    </delete>
     <select id="selectPageByHot" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
         select
         <include refid="columns"/>
@@ -148,5 +159,30 @@
         )
         )
         order by create_time desc
+    </select>
+    <select id="selectRandomPostByLike" resultType="com.liyh.model.entity.Post">
+        select *
+        from post
+        where is_deleted = 0
+          and id in (select favor_id
+                     from favorite
+                     where favorite.user_id = #{id} and type = 2)
+        order by rand()
+        limit 5
+    </select>
+    <select id="selectRandomPostByMy" resultType="com.liyh.model.entity.Post">
+        select *
+        from post
+        where is_deleted = 0
+          and user_id = #{id}
+        order by rand()
+        limit 5
+    </select>
+    <select id="isFavor" resultType="java.lang.Integer">
+        select count(*)
+        from favorite
+        where user_id = #{userId}
+          and favor_id = #{id}
+          and type = 2
     </select>
 </mapper>

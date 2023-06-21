@@ -11,7 +11,7 @@
  Target Server Version : 80028
  File Encoding         : 65001
 
- Date: 20/06/2023 11:20:58
+ Date: 21/06/2023 08:35:06
 */
 
 SET NAMES utf8mb4;
@@ -46,6 +46,26 @@ INSERT INTO `billboard`
 VALUES (4, '111', '2023-06-08 10:01:51', '2023-06-08 10:03:17', 1);
 INSERT INTO `billboard`
 VALUES (5, '已经大致完成基本使用啦！', '2023-06-19 09:22:32', '2023-06-19 09:22:32', 0);
+
+-- ----------------------------
+-- Table structure for collect
+-- ----------------------------
+DROP TABLE IF EXISTS `collect`;
+CREATE TABLE `collect`
+(
+    `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `user_id`     bigint   NOT NULL COMMENT '用户ID',
+    `topic_id`    bigint   NOT NULL COMMENT '话题ID',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB
+  CHARACTER SET = utf8
+  COLLATE = utf8_general_ci
+  ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of collect
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for comment
@@ -87,6 +107,8 @@ INSERT INTO `comment`
 VALUES (8, '测试成功', 1, 27, 0, '2023-06-19 17:16:58', '2023-06-19 17:16:58', 0);
 INSERT INTO `comment`
 VALUES (9, '你好啊，欢迎欢迎', 1, 6, 0, '2023-06-20 08:49:14', '2023-06-20 08:49:27', 1);
+INSERT INTO `comment`
+VALUES (10, '测试成功', 1, 32, 0, '2023-06-20 11:23:30', '2023-06-20 11:23:30', 0);
 
 -- ----------------------------
 -- Table structure for favorite
@@ -118,6 +140,14 @@ INSERT INTO `favorite`
 VALUES (9, 1, 1, 1);
 INSERT INTO `favorite`
 VALUES (10, 1, 8, 1);
+INSERT INTO `favorite`
+VALUES (16, 1, 2, 2);
+INSERT INTO `favorite`
+VALUES (17, 15, 2, 2);
+INSERT INTO `favorite`
+VALUES (18, 15, 4, 1);
+INSERT INTO `favorite`
+VALUES (19, 1, 32, 2);
 
 -- ----------------------------
 -- Table structure for follow
@@ -147,6 +177,8 @@ INSERT INTO `follow`
 VALUES (10, 1, 2, 0);
 INSERT INTO `follow`
 VALUES (18, 2, 1, 0);
+INSERT INTO `follow`
+VALUES (19, 4, 1, 0);
 
 -- ----------------------------
 -- Table structure for post
@@ -164,8 +196,8 @@ CREATE TABLE `post`
     `favor`       bigint                                                  NOT NULL DEFAULT 0 COMMENT '点赞',
     `top`         bit(1)                                                  NOT NULL DEFAULT b'0' COMMENT '是否置顶，1-是，0-否',
     `essence`     bit(1)                                                  NOT NULL DEFAULT b'0' COMMENT '是否加精，1-是，0-否',
+    `forward`     bigint                                                  NOT NULL DEFAULT 0 COMMENT '转发量',
     `anonymous`   tinyint(1)                                              NOT NULL DEFAULT 0 COMMENT '匿名',
-    `section_id`  int                                                     NULL     DEFAULT 0 COMMENT '专栏ID',
     `create_time` datetime                                                NOT NULL DEFAULT 'now()' COMMENT '发布时间',
     `update_time` datetime                                                NULL     DEFAULT 'now()' ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     `is_deleted`  tinyint                                                 NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
@@ -184,25 +216,24 @@ CREATE TABLE `post`
 INSERT INTO `post`
 VALUES (1, 'hello啊大家好',
         ':eyes:️\n\n> 给大家看看我的新头像\n\n![53a3584b7f4460f2c6e229a2b5432a93.jpg](http://rw61twimb.hb-bkt.clouddn.com/community/fa98327347ad4012b9c2ec3e46a3a95c.jpg)\n\n\n\n',
-        '2', 0, 1, 175, 0, b'0', b'0', 0, 0, '2020-12-01 00:29:01', '2023-06-20 08:39:40', 0);
+        '2', 0, 0, 177, 0, b'0', b'0', 0, 0, '2020-12-01 00:29:01', '2023-06-21 08:30:32', 0);
 INSERT INTO `post`
-VALUES (2, '2023 健康，快乐',
-        '<p>2023的`FLAG`</p><p><br></p><p>1. 技能进步</p><p>2. 没有烦恼</p><p>3. 发财 :smile:</p><p><br></p><p><br></p>',
-        '15', 0, 0, 30, 0, b'0', b'0', 0, 0, '2021-01-13 22:27:21', '2023-06-19 16:02:02', 0);
+VALUES (2, '2023 健康，快乐', '2023的`FLAG`\n\n1. 技能进步\n2. 没有烦恼\n3. 发财 :smile: \n\n', '15', 0, 0, 67, 2, b'0',
+        b'0', 4, 0, '2021-01-13 22:27:21', '2023-06-21 08:31:04', 0);
 INSERT INTO `post`
 VALUES (3, 'hello，spring-security', ':hibiscus: spring-security\n\n', '1', 0, 0, 55, 0, b'0', b'0', 0, 0,
         '2020-12-03 20:56:51', '2023-06-19 08:56:51', 0);
 INSERT INTO `post`
 VALUES (4, '哈哈哈，helloworld', '这是第一篇哦\n\n> hi :handshake: 你好\n\n`hello world`\n\n:+1: 很好\n', '3', 0, 0, 30,
-        0, b'0', b'0', 0, 1, '2020-11-28 19:40:02', '2023-06-19 23:22:51', 0);
+        0, b'0', b'0', 0, 0, '2020-11-28 19:40:02', '2023-06-19 23:22:51', 0);
 INSERT INTO `post`
-VALUES (5, '哈哈哈，换了个dark主题', '主题更换为Dark\n\n', '1', 0, 0, 14, 0, b'0', b'0', 0, 0, '2020-11-30 23:27:00',
-        '2023-06-18 20:49:23', 0);
+VALUES (5, '哈哈哈，换了个dark主题', '主题更换为Dark\n\n', '1', 0, 0, 15, 0, b'0', b'0', 0, 0, '2020-11-30 23:27:00',
+        '2023-06-20 11:23:51', 0);
 INSERT INTO `post`
-VALUES (6, '嘿嘿，测试一下啊', '大家好\n`Hello everyone!`\n\n\n\n', '4', 0, 0, 17, 0, b'0', b'0', 0, 0,
-        '2020-12-01 15:04:26', '2023-06-20 08:49:28', 0);
+VALUES (6, '嘿嘿，测试一下啊', '大家好\n`Hello everyone!`\n\n\n\n', '4', 0, 0, 19, 0, b'0', b'0', 0, 0,
+        '2020-12-01 15:04:26', '2023-06-20 11:25:35', 0);
 INSERT INTO `post`
-VALUES (7, '我要发财', '2021 冲冲冲！！！\n\n', '1', 0, 0, 100, 0, b'0', b'0', 0, 2, '2020-11-28 21:47:16',
+VALUES (7, '我要发财', '2021 冲冲冲！！！\n\n', '1', 0, 0, 100, 0, b'0', b'0', 0, 0, '2020-11-28 21:47:16',
         '2023-06-19 23:21:41', 0);
 INSERT INTO `post`
 VALUES (9, '权限部分 OK', '1. 创建 ok\n2. 修改 ok\n3. 删除 ok\n\n', '5', 0, 0, 27, 0, b'0', b'0', 0, 0,
@@ -212,7 +243,7 @@ VALUES (10, '测试', '测试\n\n', '1', 0, 0, 39, 0, b'0', b'0', 0, 0, '2020-12
 INSERT INTO `post`
 VALUES (11, '聚合查询并统计',
         '* [x] SQL：\n\n```sql\nSELECT s.*,\nCOUNT(t.id) AS topics\nFROM section s\nLEFT JOIN topic t\nON s.id = t.section_id\nGROUP BY s.title\n```\n\n',
-        '1', 0, 0, 58, 0, b'0', b'0', 0, 1, '2020-11-28 21:42:16', '2023-06-19 23:21:36', 0);
+        '1', 0, 0, 58, 0, b'0', b'0', 0, 0, '2020-11-28 21:42:16', '2023-06-19 23:21:36', 0);
 INSERT INTO `post`
 VALUES (12, '视频嵌入',
         ':+1:\n\n[https://www.bilibili.com/video/BV1w64y1f7w3](https://www.bilibili.com/video/BV1w64y1f7w3)\n\n[1](https://www.bilibili.com/video/BV1tp4y1x72w)\n\n```\n.vditor-reset pre > code\n```\n\n```\npublic class HelloWorld {\n\npublic static void main(String[] args) {\n    System.out.println(\"Hello World!\");\n}\n}\n```\n\n',
@@ -229,28 +260,25 @@ VALUES (22, '权限部分 OK!',
         '5', 0, 0, 0, 0, b'1', b'0', 0, 0, '2023-06-12 20:46:42', '2023-06-18 23:58:09', 1);
 INSERT INTO `post`
 VALUES (23, '现在是2023年6月15日20:36:37', '**课设好难啊，不知道写啥**\n\n---\n\n:confused: 哎，写的好像还行\n\n', '1', 0,
-        0, 65, 0, b'0', b'0', 0, 0, '2023-06-15 20:37:49', '2023-06-19 23:22:40', 0);
+        0, 67, 0, b'0', b'0', 0, 0, '2023-06-15 20:37:49', '2023-06-21 08:30:35', 0);
 INSERT INTO `post`
-VALUES (24, '我爱黎铭杰', '<p>我是lhy</p>', '15', 0, 0, 0, 0, b'0', b'0', 0, 0, '2023-06-16 18:46:25',
-        '2023-06-19 00:10:41', 1);
-INSERT INTO `post`
-VALUES (25, '测试css', '##### 123\n\n---\n\n1. 首先，点个赞\n\n:+1:\n\n', '1', 0, 0, 24, 0, b'0', b'0', 0, 0,
-        '2023-06-18 20:08:20', '2023-06-19 23:21:45', 0);
+VALUES (25, '测试css', '##### 123\n\n---\n\n1. 首先，点个赞\n\n:+1:\n\n', '1', 0, 0, 26, 0, b'0', b'0', 0, 0,
+        '2023-06-18 20:08:20', '2023-06-21 00:01:37', 0);
 INSERT INTO `post`
 VALUES (26, '测试vditor', '你好\n:smile:\n\n### hi\n\n* [ ] 123\n  qw\n\n> qw\n> qw`d`\n\n', '15', 0, 0, 6, 0, b'0',
         b'0', 0, 0, '2023-06-18 20:50:12', '2023-06-19 00:12:11', 1);
 INSERT INTO `post`
 VALUES (27, '测试文件上传',
         '![29aeb9db309305157567c237ceede3e0.jpeg](http://rw61twimb.hb-bkt.clouddn.com/community/86d7d8f536954338aff5cc3d08dbdf6b.jpeg)\n\n123\n[20230618224644812.mp4](http://rw61twimb.hb-bkt.clouddn.com/community/6744ad8ec1a74e92a6fd657d43ce58e9.mp4)\n[Java.md](http://rw61twimb.hb-bkt.clouddn.com/community/44de20ee0de644b78966d7bfa0c33663.md)\n\n',
-        '1', 0, 0, 32, 0, b'0', b'0', 0, 0, '2023-06-18 22:40:59', '2023-06-20 08:39:48', 0);
+        '1', 0, 0, 34, 0, b'0', b'0', 0, 0, '2023-06-18 22:40:59', '2023-06-21 08:30:14', 0);
 INSERT INTO `post`
 VALUES (28, '我也来发个帖子',
         '* [ ] 我的新头像\n\n:tada:️\n\n![53a3584b7f4460f2c6e229a2b5432a93.jpg](http://rw61twimb.hb-bkt.clouddn.com/community/87943f7df2954c7aa0e7e799e06d625c.jpg)\n\n',
-        '15', 0, 0, 30, 0, b'0', b'0', 0, 0, '2023-06-19 00:03:29', '2023-06-19 23:19:10', 0);
+        '15', 0, 0, 31, 0, b'0', b'0', 0, 0, '2023-06-19 00:03:29', '2023-06-20 11:23:12', 0);
 INSERT INTO `post`
 VALUES (29, '大家好，我是新来的',
         '冒个泡。。。\n\n![694ed4f96a14ca2299711140fdafc39b.jpg](http://rw61twimb.hb-bkt.clouddn.com/community/837e20e8ee47439792d2836104e69617.jpg)\n',
-        '3', 0, 0, 60, 0, b'0', b'0', 0, 0, '2023-06-19 00:04:52', '2023-06-20 09:40:21', 0);
+        '3', 0, 0, 62, 0, b'0', b'0', 0, 0, '2023-06-19 00:04:52', '2023-06-21 08:30:11', 0);
 INSERT INTO `post`
 VALUES (30, '测试一下标签啊', '这里是测试数据\n\n', '1', 0, 0, 3, 0, b'0', b'0', 0, 0, '2023-06-19 08:39:22',
         '2023-06-19 08:41:34', 1);
@@ -258,8 +286,8 @@ INSERT INTO `post`
 VALUES (31, '测试', '测试一下删除标签\n', '1', 0, 0, 1, 0, b'0', b'0', 0, 0, '2023-06-19 08:47:07',
         '2023-06-19 08:47:21', 1);
 INSERT INTO `post`
-VALUES (32, '测试一下匿名功能', '测试测试\n\n', '1', 0, 0, 21, 0, b'0', b'0', 1, 0, '2023-06-20 09:35:18',
-        '2023-06-20 10:59:34', 0);
+VALUES (32, '测试一下匿名功能', '测试测试\n\n', '1', 0, 0, 72, 1, b'0', b'0', 0, 1, '2023-06-20 09:35:18',
+        '2023-06-21 08:30:08', 0);
 
 -- ----------------------------
 -- Table structure for post_tag
@@ -297,34 +325,8 @@ INSERT INTO `post_tag`
 VALUES (109, 18, 23, 0);
 INSERT INTO `post_tag`
 VALUES (114, 7, 32, 0);
-
--- ----------------------------
--- Table structure for promotion
--- ----------------------------
-DROP TABLE IF EXISTS `promotion`;
-CREATE TABLE `promotion`
-(
-    `id`          bigint                                                        NOT NULL AUTO_INCREMENT COMMENT '主键',
-    `title`       varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL     DEFAULT NULL COMMENT '广告标题',
-    `link`        varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL     DEFAULT NULL COMMENT '广告链接',
-    `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL     DEFAULT NULL COMMENT '说明',
-    `is_deleted`  tinyint                                                       NOT NULL DEFAULT 0 COMMENT '删除标记（0:可用 1:已删除）',
-    PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 3
-  CHARACTER SET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci COMMENT = '广告推广表'
-  ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of promotion
--- ----------------------------
-INSERT INTO `promotion`
-VALUES (1, '开发者头条', 'https://juejin.cn/', '开发者头条', 0);
-INSERT INTO `promotion`
-VALUES (2, '并发编程网', 'https://juejin.cn/', '并发编程网', 0);
-INSERT INTO `promotion`
-VALUES (3, '掘金', 'https://juejin.cn/', '掘金', 0);
+INSERT INTO `post_tag`
+VALUES (115, 13, 2, 0);
 
 -- ----------------------------
 -- Table structure for sys_dept
@@ -351,15 +353,24 @@ CREATE TABLE `sys_dept`
 -- ----------------------------
 -- Records of sys_dept
 -- ----------------------------
-INSERT INTO `sys_dept` VALUES (1, '河南工业大学莲花街校区', 0, 1, '王倩倩', 1, '2023-05-26 22:22:32', '2023-05-26 22:22:32', 0);
-INSERT INTO `sys_dept` VALUES (2, '人工智能与大数据学院', 1, 1, '王倩倩', 1, '2023-05-26 22:22:32', '2023-05-26 22:22:32', 0);
-INSERT INTO `sys_dept` VALUES (3, '软件工程', 2, 2, '王刚', 1, '2023-05-26 22:57:52', '2023-05-26 22:57:52', 0);
-INSERT INTO `sys_dept` VALUES (4, '人工智能', 2, 1, '王刚', 1, '2023-05-26 22:22:32', '2023-05-26 22:22:32', 0);
-INSERT INTO `sys_dept` VALUES (5, '信息科学与工程学院', 1, 1, '王刚', 1, '2023-05-26 22:22:32', '2023-05-26 22:22:32', 0);
-INSERT INTO `sys_dept` VALUES (6, '电子信息工程', 5, 1, '王倩倩', 1, '2023-05-26 22:57:31', '2023-05-26 22:57:31', 0);
-INSERT INTO `sys_dept` VALUES (7, '计算机科学与技术', 5, 2, '王倩倩', 1, '2023-05-26 23:38:58', '2023-05-26 23:38:58', 0);
-INSERT INTO `sys_dept` VALUES (8, '物联网工程', 5, 3, '王刚', 1, '2023-05-27 00:18:48', '2023-05-27 00:18:48', 1);
-INSERT INTO `sys_dept` VALUES (9, '经济贸易学院', 1, 3, '王倩倩', 1, '2023-05-30 23:47:08', NULL, 0);
+INSERT INTO `sys_dept`
+VALUES (1, '河南工业大学莲花街校区', 0, 1, '王倩倩', 1, '2023-05-26 22:22:32', '2023-05-26 22:22:32', 0);
+INSERT INTO `sys_dept`
+VALUES (2, '人工智能与大数据学院', 1, 1, '王倩倩', 1, '2023-05-26 22:22:32', '2023-05-26 22:22:32', 0);
+INSERT INTO `sys_dept`
+VALUES (3, '软件工程', 2, 2, '王刚', 1, '2023-05-26 22:57:52', '2023-05-26 22:57:52', 0);
+INSERT INTO `sys_dept`
+VALUES (4, '人工智能', 2, 1, '王刚', 1, '2023-05-26 22:22:32', '2023-05-26 22:22:32', 0);
+INSERT INTO `sys_dept`
+VALUES (5, '信息科学与工程学院', 1, 1, '王刚', 1, '2023-05-26 22:22:32', '2023-05-26 22:22:32', 0);
+INSERT INTO `sys_dept`
+VALUES (6, '电子信息工程', 5, 1, '王倩倩', 1, '2023-05-26 22:57:31', '2023-05-26 22:57:31', 0);
+INSERT INTO `sys_dept`
+VALUES (7, '计算机科学与技术', 5, 2, '王倩倩', 1, '2023-05-26 23:38:58', '2023-05-26 23:38:58', 0);
+INSERT INTO `sys_dept`
+VALUES (8, '物联网工程', 5, 3, '王刚', 1, '2023-05-27 00:18:48', '2023-05-27 00:18:48', 1);
+INSERT INTO `sys_dept`
+VALUES (9, '经济贸易学院', 1, 3, '王倩倩', 1, '2023-05-30 23:47:08', NULL, 0);
 
 -- ----------------------------
 -- Table structure for sys_role
@@ -533,7 +544,7 @@ VALUES (10, '爱情', 0, 0);
 INSERT INTO `tag`
 VALUES (12, '校园', 0, 0);
 INSERT INTO `tag`
-VALUES (13, '祝福', 0, 0);
+VALUES (13, '祝福', 1, 0);
 INSERT INTO `tag`
 VALUES (14, '新人报道', 1, 0);
 INSERT INTO `tag`

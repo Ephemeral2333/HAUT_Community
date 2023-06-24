@@ -59,18 +59,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     /**
+     * @return void
      * @Author LiYH
      * @Description 分配角色
      * @Date 16:06 2023/6/5
      * @Param [userId, roleIds]
-     * @return void
      **/
     @Override
     public void doAssign(String userid, List<Long> roleIds) {
         QueryWrapper<SysUserRole> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userid);
         sysUserRoleMapper.delete(queryWrapper);
-        for (Long roleId: roleIds) {
+        for (Long roleId : roleIds) {
             SysUserRole sysUserRole = new SysUserRole();
             sysUserRole.setUserId(String.valueOf(userid));
             sysUserRole.setRoleId(String.valueOf(roleId));
@@ -151,7 +151,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         int collectCount = postMapper.getCollectCountByUserId(userId);
 
         // 获取文章总阅览数
-        int viewCount = postMapper.getViewCountByUserId(userId);
+        Integer viewCount = postMapper.getViewCountByUserId(userId);
+
+        if (viewCount == null) {
+            viewCount = 0;
+        }
 
         return new UserInfoCountVo(Long.valueOf(userId), username,
                 articleCount, likeCount, collectCount, viewCount, avatar);

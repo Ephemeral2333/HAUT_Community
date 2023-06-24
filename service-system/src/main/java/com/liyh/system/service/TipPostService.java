@@ -8,6 +8,8 @@ import com.liyh.model.entity.TipPost;
 import com.liyh.model.vo.TipPostVo;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @Author LiYH
  * @Description TODO
@@ -23,4 +25,6 @@ public interface TipPostService extends IService<TipPost> {
     void pass(Long id);
 
     void refuse(Long id);
+
+    IPage<TipPost> selectPageByUserId(Page<TipPost> tipPostPage, String userId);
 }

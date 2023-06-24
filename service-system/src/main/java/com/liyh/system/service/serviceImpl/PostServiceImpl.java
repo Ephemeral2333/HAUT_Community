@@ -136,11 +136,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public void deletePost(Long id) {
         // 先获取帖子的所有标签
         List<Tag> tags = tagService.selectTagsByPostId(id);
-        // 让每个标签的引用数减一
-        tags.forEach(tag -> {
-            tag.setTopicCount(tag.getTopicCount() - 1);
-            tagService.updateById(tag);
-        });
         // 删除帖子
         postMapper.deleteById(id);
         // 然后删除帖子和标签的关联关系
@@ -162,21 +157,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Override
     public void favor(String userId, Long id) {
         postMapper.favor(userId, id);
-
-        // 获取帖子
-        Post post = postMapper.selectByPk(id);
-        post.setFavor(post.getFavor() + 1);
-        postMapper.update(post);
     }
 
     @Override
     public void unfavor(String userId, Long id) {
         postMapper.unfavor(userId, id);
-
-        // 获取帖子
-        Post post = postMapper.selectByPk(id);
-        post.setFavor(post.getFavor() - 1);
-        postMapper.update(post);
     }
 
     @Override
@@ -209,19 +194,33 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public void collect(String userId, Long id) {
-        Post post = postMapper.selectByPk(id);
         if (isCollect(userId, id)) {
-            post.setCollects(post.getCollects() - 1);
-            postMapper.update(post);
             collectMapper.unCollect(userId, id);
         } else {
-            post.setCollects(post.getCollects() + 1);
-            postMapper.update(post);
             Collect collect = Collect.builder()
                     .userId(Long.valueOf(userId))
                     .topicId(id)
                     .build();
             collectMapper.insert(collect);
         }
+    }
+
+    @Override
+    public List<Post> selectRandomPostByCollect(String userId) {
+        return postMapper.selectRandomPostByCollect(userId);
+    }
+
+    @Override
+    public void top(Long id) {
+        Post post = postMapper.selectByPk(id);
+        post.setTop(!post.isTop());
+        postMapper.update(post);
+    }
+
+    @Override
+    public void essence(Long id) {
+        Post post = postMapper.selectByPk(id);
+        post.setEssence(!post.isEssence());
+        postMapper.update(post);
     }
 }

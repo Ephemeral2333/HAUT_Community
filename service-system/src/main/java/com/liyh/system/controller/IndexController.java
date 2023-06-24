@@ -92,7 +92,7 @@ public class IndexController {
     @GetMapping("sendCode")
     public Result sendCode(@RequestParam String email) {
         if (sysUserService.getByEmail(email) != null) {
-            return Result.alreadyEmail();
+            return Result.ok("该邮箱已被注册");
         }
         log.info(email);
         String verifyCode = VCodeUtil.verifyCode(6);

@@ -8,11 +8,14 @@
     <resultMap id="includeUser" type="com.liyh.model.entity.Post" autoMapping="true">
         <id column="id" property="id"/>
         <association property="author" column="user_id" select="com.liyh.system.mapper.SysUserMapper.getFrontInfo"/>
+        <association property="comments" column="id" select="getCommentsCountByPostId"/>
+        <association property="favor" column="id" select="getFavoriteCountByPostId"/>
+        <association property="collects" column="id" select="getCollectsCountByPostId"/>
         <collection property="tags" column="id" select="com.liyh.system.mapper.TagMapper.selectTagsByPostId"/>
     </resultMap>
 
     <sql id="columns">
-        id,title,content,user_id,comments,collects,view,favor,top,essence,forward,anonymous,create_time,update_time,is_deleted
+        id,title,content,user_id,view,top,essence,forward,anonymous,create_time,update_time,is_deleted
     </sql>
     <insert id="favor">
         insert into favorite (user_id, favor_id, type)
@@ -36,17 +39,8 @@
             <if test="anonymous != null">
                 anonymous = #{anonymous},
             </if>
-            <if test="favor != null">
-                favor = #{favor},
-            </if>
-            <if test="collects != null">
-                collects = #{collects},
-            </if>
             <if test="forward != null">
                 forward = #{forward},
-            </if>
-            <if test="comments != null">
-                comments = #{comments},
             </if>
             <if test="view != null">
                 view = #{view},
@@ -244,5 +238,30 @@
         from post
         where user_id = #{userId}
           and is_deleted = 0
+    </select>
+    <select id="selectRandomPostByCollect" resultType="com.liyh.model.entity.Post">
+        select *
+        from post
+        where is_deleted = 0
+          and id in (select topic_id
+                     from collect
+                     where collect.user_id = #{id})
+        order by rand()
+        limit 5
+    </select>
+    <select id="getCommentsCountByPostId" resultType="java.lang.Integer">
+        select post_count.comments as comments
+        from post_count
+        where id = #{id}
+    </select>
+    <select id="getFavoriteCountByPostId" resultType="java.lang.Integer">
+        select post_count.favorites as favorites
+        from post_count
+        where id = #{id}
+    </select>
+    <select id="getCollectsCountByPostId" resultType="java.lang.Integer">
+        select post_count.collects as collects
+        from post_count
+        where id = #{id}
     </select>
 </mapper>

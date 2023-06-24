@@ -36,7 +36,7 @@ public class MenuHelper {
      * @return
      */
     public static SysMenu findChildren(SysMenu sysMenu, List<SysMenu> treeNodes) {
-        sysMenu.setChildren(new ArrayList<SysMenu>());
+        sysMenu.setChildren(new ArrayList<>());
 
         for (SysMenu it : treeNodes) {
             if (sysMenu.getId().longValue() == it.getParentId().longValue()) {

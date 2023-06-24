@@ -23,7 +23,7 @@ public class Result<T> {
 
     // 返回数据
     protected static <T> Result<T> build(T data) {
-        Result<T> result = new Result<T>();
+        Result<T> result = new Result<>();
         if (data != null) {
             result.setData(data);
         }

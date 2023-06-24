@@ -3,11 +3,15 @@ package com.liyh.system.service.serviceImpl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tip;
+import com.liyh.model.entity.TipPost;
 import com.liyh.system.mapper.TipMapper;
 import com.liyh.system.service.TipService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @Author LiYH

@@ -60,5 +60,13 @@ public interface PostMapper extends BaseMapper<Post> {
 
     int getCollectCountByUserId(String userId);
 
-    int getViewCountByUserId(String userId);
+    Integer getViewCountByUserId(String userId);
+
+    List<Post> selectRandomPostByCollect(String id);
+
+    int getCommentsCountByPostId(Long id);
+
+    int getFavoriteCountByPostId(Long id);
+
+    int getCollectsCountByPostId(Long id);
 }

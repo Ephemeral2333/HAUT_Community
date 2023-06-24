@@ -14,6 +14,8 @@ import com.liyh.system.service.TipPostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @Author LiYH
  * @Description TipPost接口实现类
@@ -60,7 +62,7 @@ public class TipPostServiceImpl extends ServiceImpl<TipPostMapper, TipPost> impl
         tipMapper.insert(tip);
 
         String email = sysUserService.getEmailById(tipPost.getPostManId());
-
+        // 发送邮件告知用户
         emailService.sendPostResultEmail(email, "pass", tipPost.getContent());
 
         tipPost.setIsAccepted(1);   // 设置为1表示通过
@@ -76,5 +78,10 @@ public class TipPostServiceImpl extends ServiceImpl<TipPostMapper, TipPost> impl
 
         tipPost.setIsAccepted(2);   // 设置为2表示拒绝
         tipPostMapper.updateById(tipPost);
+    }
+
+    @Override
+    public IPage<TipPost> selectPageByUserId(Page<TipPost> tipPostPage, String userId) {
+        return tipPostMapper.selectPageByUserId(tipPostPage, userId);
     }
 }

@@ -24,4 +24,8 @@ public interface TagMapper extends BaseMapper<Tag> {
     IPage<Tag> selectTagList(Page<Tag> tagPage);
 
     void deletePostTagByTagId(Long id);
+
+    List<Tag> getHotTags();
+
+    int selectCountByTagId(Long id);
 }

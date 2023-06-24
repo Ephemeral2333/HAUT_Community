@@ -3,7 +3,11 @@ package com.liyh.system.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tip;
+import com.liyh.model.entity.TipPost;
+
+import java.util.List;
 
 /**
  * @Author LiYH

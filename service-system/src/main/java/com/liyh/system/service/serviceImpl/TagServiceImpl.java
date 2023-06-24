@@ -33,10 +33,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
             Tag tag = tagMapper.selectOne(queryWrapper);
             if (tag == null) {
                 // 由于这里是新增标签，所以默认标签的话题数为1
-                tag = Tag.builder().name(tagName).topicCount(1).build();
+                tag = Tag.builder().name(tagName).build();
                 tagMapper.insert(tag);
             } else {
-                tag.setTopicCount(tag.getTopicCount() + 1);
                 tagMapper.updateById(tag);
             }
             tagList.add(tag);
@@ -48,11 +47,6 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     public void createTopicTag(Long topicId, List<Tag> tags) {
         // 先获取原有的标签
         List<Tag> oldTags = tagMapper.selectTagsByPostId(topicId);
-        // 遍历原有的标签，让他们都减1
-        for (Tag oldTag : oldTags) {
-            oldTag.setTopicCount(oldTag.getTopicCount() - 1);
-            tagMapper.updateById(oldTag);
-        }
 
         // 先删除原有的标签，方便更新
         tagMapper.deletePostTagByTopicId(topicId);
@@ -62,9 +56,10 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
         }
     }
 
+    // TODO 这里的热门标签应该是根据话题的数量来排序的，暂时先这样
     @Override
     public List<Tag> getHotTags() {
-        return tagMapper.selectList(new QueryWrapper<Tag>().orderByDesc("topic_count").last("limit 10"));
+        return tagMapper.getHotTags();
     }
 
     @Override
@@ -91,7 +86,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     public void saveTag(String name) {
         Tag tag = tagMapper.selectOne(new QueryWrapper<Tag>().eq("name", name));
         if (tag == null) {
-            tag = Tag.builder().name(name).topicCount(0).build();
+            tag = Tag.builder().name(name).build();
             tagMapper.insert(tag);
         }
     }

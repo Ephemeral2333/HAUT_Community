@@ -72,6 +72,7 @@ public class SysDeptController {
     @ApiOperation(value = "更新部门")
     @PutMapping("/update/{id}")
     public Result update(@PathVariable Long id, @RequestBody SysDept sysDept){
+        log.info("sysDept:{}", sysDept);
         SysUser sysUser = sysUserService.getByUsername(sysDept.getPrincipal());
         if (sysUser == null) {
             return Result.noUser(null);

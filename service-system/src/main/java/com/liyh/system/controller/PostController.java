@@ -175,6 +175,13 @@ public class PostController {
         return Result.ok(postService.selectRandomPostByLike(userId));
     }
 
+    @ApiOperation("随机获取5个收藏的帖子")
+    @GetMapping("/post/collect/random")
+    public Result getPostByCollect(HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        return Result.ok(postService.selectRandomPostByCollect(userId));
+    }
+
     @ApiOperation("随机获取我的5个帖子")
     @GetMapping("/post/my/random")
     public Result getPostByMy(HttpServletRequest request) {
@@ -191,7 +198,7 @@ public class PostController {
     }
 
     @ApiOperation("判断是否点赞帖子")
-    @GetMapping("/post/isFavor/{id}")
+    @GetMapping("/front/post/isFavor/{id}")
     public Result isFavor(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         return Result.ok(postService.isFavor(userId, id));
@@ -206,7 +213,7 @@ public class PostController {
     }
 
     @ApiOperation("增加转发量")
-    @GetMapping("/post/increaseShareCount/{id}")
+    @GetMapping("/front/post/increaseShareCount/{id}")
     public Result increaseShareCount(@PathVariable Long id) {
         postService.increaseShareCount(id);
         log.info("增加转发量成功");
@@ -234,7 +241,7 @@ public class PostController {
     }
 
     @ApiOperation("判断是否收藏帖子")
-    @GetMapping("/post/isCollect/{id}")
+    @GetMapping("/front/post/isCollect/{id}")
     public Result isCollect(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         return Result.ok(postService.isCollect(userId, id));
@@ -245,6 +252,20 @@ public class PostController {
     public Result collect(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         postService.collect(userId, id);
+        return Result.ok();
+    }
+
+    @ApiOperation("置顶/取消置顶帖子")
+    @PostMapping("/admin/post/top/{id}")
+    public Result top(@PathVariable Long id) {
+        postService.top(id);
+        return Result.ok();
+    }
+
+    @ApiOperation("加精/取消加精帖子")
+    @PostMapping("/admin/post/essence/{id}")
+    public Result essence(@PathVariable Long id) {
+        postService.essence(id);
         return Result.ok();
     }
 }

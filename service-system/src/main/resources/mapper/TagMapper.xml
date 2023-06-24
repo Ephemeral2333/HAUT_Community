@@ -5,8 +5,13 @@
 
 
 <mapper namespace="com.liyh.system.mapper.TagMapper">
+    <resultMap id="includeCount" type="com.liyh.model.entity.Tag">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <association property="topicCount" column="id" select="selectCountByTagId"/>
+    </resultMap>
     <sql id="columns">
-        id,name,topic_count,is_deleted
+        id,name
     </sql>
     <insert id="createTopicTag">
         insert into post_tag(topic_id, tag_id)
@@ -22,19 +27,31 @@
         from post_tag
         where tag_id = #{id}
     </delete>
-    <select id="selectTagsByPostId" resultType="com.liyh.model.entity.Tag">
+    <select id="selectTagsByPostId" resultType="com.liyh.model.entity.Tag" resultMap="includeCount">
         select *
         from tag
         where id in (select tag_id
                      from post_tag
                      where topic_id = #{id})
     </select>
-    <select id="selectTagList" resultType="com.liyh.model.entity.Tag">
+    <select id="selectTagList" resultType="com.liyh.model.entity.Tag" resultMap="includeCount">
         select
         <include refid="columns"/>
         from tag
-        where is_deleted = 0
         order by id
+    </select>
+    <select id="getHotTags" resultType="com.liyh.model.entity.Tag" resultMap="includeCount">
+        SELECT tag.*
+        FROM tag
+                 JOIN (SELECT id
+                       FROM tag_count
+                       ORDER BY count DESC
+                       LIMIT 10 OFFSET 0) subquery ON tag.id = subquery.id;
+    </select>
+    <select id="selectCountByTagId" resultType="java.lang.Integer">
+        select count
+        from tag_count
+        where id = #{id}
     </select>
 
 

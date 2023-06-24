@@ -37,11 +37,8 @@ public class Post extends BaseEntity implements Serializable {
     @TableField("user_id")
     private Long userId;
 
-    @TableField("comments")
-    private int comments;
-
-    @TableField("favor")
-    private Long favor;
+    @TableField(exist = false)
+    private int favor;
 
     @TableField("view")
     private int view;
@@ -52,7 +49,7 @@ public class Post extends BaseEntity implements Serializable {
     @TableField("top")
     private boolean top;
 
-    @TableField("collects")
+    @TableField(exist = false)
     private int collects;
 
     @TableField("essence")
@@ -65,4 +62,7 @@ public class Post extends BaseEntity implements Serializable {
     private UserVo author;
 
     private List<Tag> tags;
+
+    @TableField(exist = false)
+    private int comments;
 }

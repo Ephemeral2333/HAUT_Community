@@ -71,4 +71,10 @@ public interface PostService extends IService<Post> {
     boolean isCollect(String userId, Long id);
 
     void collect(String userId, Long id);
+
+    List<Post> selectRandomPostByCollect(String userId);
+
+    void top(Long id);
+
+    void essence(Long id);
 }

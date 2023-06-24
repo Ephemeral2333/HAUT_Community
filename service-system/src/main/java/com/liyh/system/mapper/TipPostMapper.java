@@ -7,6 +7,8 @@ import com.liyh.model.entity.Tip;
 import com.liyh.model.entity.TipPost;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 /**
  * @Author LiYH
  * @Description TipPostmapper
@@ -15,4 +17,6 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface TipPostMapper extends BaseMapper<TipPost> {
     IPage<TipPost> selectPage(Page<TipPost> tipPostPage);
+
+    IPage<TipPost> selectPageByUserId(Page<TipPost> tipPostPage, String userId);
 }

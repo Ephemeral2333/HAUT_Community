@@ -3,7 +3,10 @@ package com.liyh.system.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
+import com.liyh.common.utils.JwtHelper;
+import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tip;
+import com.liyh.model.entity.TipPost;
 import com.liyh.model.vo.Pagination;
 import com.liyh.system.service.TipService;
 import io.swagger.annotations.Api;
@@ -11,7 +14,9 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**

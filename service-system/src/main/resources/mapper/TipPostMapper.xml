@@ -13,4 +13,9 @@
         <include refid="columns"/>
         from tip_post where is_accepted = 0
     </select>
+    <select id="selectPageByUserId" resultType="com.liyh.model.entity.TipPost">
+        select
+        <include refid="columns"/>
+        from tip_post where postman_id = #{userId}
+    </select>
 </mapper>

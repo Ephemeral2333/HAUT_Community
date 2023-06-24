@@ -32,11 +32,8 @@ public class Tag implements Serializable {
     @TableField("name")
     private String name;
 
-    @TableField("topic_count")
+    @TableField(exist = false)
     private int topicCount;
-
-    @TableField("is_deleted")
-    private boolean isDeleted;
 
     @TableField(exist = false)
     private List<Post> posts;

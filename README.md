@@ -32,5 +32,6 @@ JDK 17 + MySQL + Redis + Maven
 1. 去application-dev.yml中更改MySQL的账号密码，并运行haut_community.sql
 2. 更改Redis端口密码，一定记得启动Redis服务
 3. 更改application-dev.yml中mail的账户密码改成自己的
-4. 启动启动类
-5. 账户名可以查看数据库，初始密码都为111111
+4. 在FileServiceImpl中更改七牛云的accesskey和secret_key为自己的
+5. 启动启动类
+6. 账户名可以查看数据库，初始密码都为111111

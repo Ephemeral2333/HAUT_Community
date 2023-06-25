@@ -28,6 +28,4 @@ public final class MD5 {
             throw new RuntimeException("MD5加密出错！！+" + e);
         }
     }
-
-
 }

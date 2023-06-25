@@ -24,7 +24,8 @@ JDK 17 + MySQL + Redis + Maven
 
 #### 功能结构图
 
-![image-20230625125442561](C:\Users\LiYH\AppData\Roaming\Typora\typora-user-images\image-20230625125442561.png)
+![image](https://github.com/Ephemeral2333/HAUT_Community/assets/88269111/0f7fb96b-b997-451f-9cec-8c45e48c0756)
+
 
 #### 运行方法
 

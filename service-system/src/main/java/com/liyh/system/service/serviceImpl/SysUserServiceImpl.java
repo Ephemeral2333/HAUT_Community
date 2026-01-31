@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liyh.common.utils.MD5;
-import com.liyh.model.system.SysRole;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.system.SysUserRole;
 import com.liyh.model.vo.*;
@@ -15,12 +14,17 @@ import com.liyh.system.mapper.SysUserRoleMapper;
 import com.liyh.system.service.SysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Transactional
+/**
+ * @Author LiYH
+ * @Description 用户服务实现类
+ * @Date 2023/5/9
+ **/
 @Service
 @Slf4j
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
@@ -33,6 +37,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Autowired
     private PostMapper postMapper;
+
+    @Value("${app.default-password:123456}")
+    private String defaultPassword;
+
+    @Value("${app.default-avatar}")
+    private String defaultAvatar;
 
     @Override
     public IPage<SysUser> selectPage(Page<SysUser> pageParam, SysUserQueryVo userQueryVo) {
@@ -54,18 +64,19 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public void resetPassword(Long id) {
         SysUser sysUser = sysUserMapper.selectById(id);
-        sysUser.setPassword(MD5.encrypt("111111"));
+        sysUser.setPassword(MD5.encrypt(defaultPassword));
         sysUserMapper.updateById(sysUser);
+        log.info("用户密码已重置, userId: {}", id);
     }
 
     /**
-     * @return void
-     * @Author LiYH
-     * @Description 分配角色
-     * @Date 16:06 2023/6/5
-     * @Param [userId, roleIds]
-     **/
+     * 分配角色
+     *
+     * @param userid  用户ID
+     * @param roleIds 角色ID列表
+     */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void doAssign(String userid, List<Long> roleIds) {
         QueryWrapper<SysUserRole> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userid);
@@ -96,6 +107,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void register(RegisterVo registerVo) {
         registerVo.setPass(MD5.encrypt(registerVo.getPass()));
         SysUser sysUser = new SysUser();
@@ -103,8 +115,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         sysUser.setPassword(registerVo.getPass());
         sysUser.setEmail(registerVo.getEmail());
         sysUser.setNickname(registerVo.getUsername());
-        sysUser.setHeadUrl("http://rw61twimb.hb-bkt.clouddn.com/694ed4f96a14ca2299711140fdafc39b.jpg");
+        sysUser.setHeadUrl(defaultAvatar);
         sysUserMapper.insert(sysUser);
+        log.info("用户注册成功, username: {}", registerVo.getUsername());
     }
 
     @Override
@@ -127,6 +140,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SysUser sysUser = sysUserMapper.selectById(userId);
         sysUser.setPassword(MD5.encrypt(pass));
         sysUserMapper.updateById(sysUser);
+        log.info("用户修改密码成功, userId: {}", userId);
     }
 
     @Override
@@ -138,7 +152,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     public UserInfoCountVo getUserInfoCount(String userId) {
         // 获取用户信息
         String username = sysUserMapper.getNameById(Long.valueOf(userId));
-
         String avatar = sysUserMapper.getAvatarById(Long.valueOf(userId));
 
         // 获取用户文章总数
@@ -152,7 +165,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
         // 获取文章总阅览数
         Integer viewCount = postMapper.getViewCountByUserId(userId);
-
         if (viewCount == null) {
             viewCount = 0;
         }

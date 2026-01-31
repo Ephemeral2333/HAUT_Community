@@ -1,35 +1,25 @@
 package com.liyh.system.controller;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
 import com.liyh.common.utils.JwtHelper;
 import com.liyh.common.utils.MD5;
-import com.liyh.common.utils.VCodeUtil;
 import com.liyh.model.system.SysUser;
 import com.liyh.model.vo.Pagination;
-import com.liyh.model.vo.SysRoleQueryVo;
 import com.liyh.model.vo.SysUserQueryVo;
 import com.liyh.model.vo.UserInfoCountVo;
-import com.liyh.system.service.EmailService;
 import com.liyh.system.service.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import java.net.http.HttpRequest;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 
 @Api(tags = "用户管理")
@@ -41,6 +31,12 @@ public class SysUserController {
 
     @Autowired
     private SysUserService sysUserService;
+
+    @Value("${app.default-password:123456}")
+    private String defaultPassword;
+
+    @Value("${app.default-avatar}")
+    private String defaultAvatar;
 
     @ApiOperation(value = "获取分页列表")
     @PostMapping("/getPageList")
@@ -68,10 +64,10 @@ public class SysUserController {
     @PostMapping("/save")
     public Result save(@RequestBody SysUser user) {
         user.setDeptId(user.getParentId());
-        user.setPassword("123456");
+        user.setPassword(defaultPassword);
         user.setNickname(user.getUsername());
         user.setIsDeleted(0);
-        user.setHeadUrl("http://rw61twimb.hb-bkt.clouddn.com/694ed4f96a14ca2299711140fdafc39b.jpg");
+        user.setHeadUrl(defaultAvatar);
         // 使用MD5进行加密
         user.setPassword(MD5.encrypt(user.getPassword()));
         boolean isSuccess = sysUserService.save(user);
@@ -106,7 +102,7 @@ public class SysUserController {
     @ApiOperation(value = "更新状态")
     @PutMapping("updateStatus/{id}/{status}")
     public Result updateStatus(@PathVariable String id, @PathVariable Integer status) {
-        log.info("id = " + id + " status = " + status);
+        log.info("更新用户状态, id: {}, status: {}", id, status);
         sysUserService.updateStatus(id, status);
         return Result.ok();
     }

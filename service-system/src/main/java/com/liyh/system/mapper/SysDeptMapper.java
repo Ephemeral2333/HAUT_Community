@@ -3,6 +3,7 @@ package com.liyh.system.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.liyh.model.system.SysDept;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -16,5 +17,5 @@ public interface SysDeptMapper extends BaseMapper<SysDept> {
     List<SysDept> findAll();
 
     // 根据id查询部门信息，但只提供ID和Name
-    SysDept selectByPKForUser(Long id);
+    SysDept selectByPKForUser(@Param("id") Long id);
 }

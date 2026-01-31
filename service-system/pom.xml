@@ -53,6 +53,12 @@
             <artifactId>qiniu-java-sdk</artifactId>
             <version>7.2.7</version>
         </dependency>
+
+        <!-- AOP 支持，用于分布式锁切面 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

@@ -1,6 +1,7 @@
 package com.liyh.system.controller;
 
 import com.liyh.common.result.Result;
+import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.service.FileService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping(value = "/upload")
+    @RateLimit(prefix = "limit:upload:", limitType = RateLimit.LimitType.USER, limit = 10, period = 60,
+               message = "上传太频繁，请稍后再试")
     public Result upload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return Result.fail();

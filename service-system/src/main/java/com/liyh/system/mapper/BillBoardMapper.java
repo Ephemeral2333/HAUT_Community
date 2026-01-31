@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Billboard;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @Author LiYH
@@ -15,7 +16,7 @@ import org.apache.ibatis.annotations.Mapper;
 public interface BillBoardMapper extends BaseMapper<Billboard> {
     Billboard selectOrderByTime();
 
-    IPage<Billboard> selectPage(Page<Billboard> billboard);
+    IPage<Billboard> selectPage(@Param("page") Page<Billboard> billboard);
 
-    void update(Billboard billboard);
+    void update(@Param("billboard") Billboard billboard);
 }

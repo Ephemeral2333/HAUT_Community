@@ -15,5 +15,5 @@ import org.apache.ibatis.annotations.Param;
  **/
 @Mapper
 public interface SysRoleMapper extends BaseMapper<SysRole> {
-    IPage<SysRole> selectPage(Page<SysRole> page, @Param("vo") SysRoleQueryVo roleQueryVo);
+    IPage<SysRole> selectPage(@Param("page") Page<SysRole> page, @Param("vo") SysRoleQueryVo roleQueryVo);
 }

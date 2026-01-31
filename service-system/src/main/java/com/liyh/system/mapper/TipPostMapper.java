@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Tip;
 import com.liyh.model.entity.TipPost;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ import java.util.List;
  **/
 @Mapper
 public interface TipPostMapper extends BaseMapper<TipPost> {
-    IPage<TipPost> selectPage(Page<TipPost> tipPostPage);
+    IPage<TipPost> selectPage(@Param("page") Page<TipPost> tipPostPage);
 
-    IPage<TipPost> selectPageByUserId(Page<TipPost> tipPostPage, String userId);
+    IPage<TipPost> selectPageByUserId(@Param("page") Page<TipPost> tipPostPage, @Param("userId") String userId);
 }

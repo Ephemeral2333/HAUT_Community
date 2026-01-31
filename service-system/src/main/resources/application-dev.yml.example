@@ -1,0 +1,68 @@
+server:
+  port: 8080
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 查看日志
+  global-config:
+    db-config:
+      id-type: auto # 主键类型
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/haut_community?characterEncoding=utf-8&useSSL=false
+    username: root
+    password: 你的数据库密码
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 1800000
+    password:
+    jedis:
+      pool:
+        max-active: 20 #最大连接数
+        max-wait: -1    #最大阻塞等待时间(负数表示没限制)
+        max-idle: 5    #最大空闲
+        min-idle: 0     #最小空闲
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: 你的QQ邮箱
+    password: 你的QQ邮箱授权码
+    properties:
+      mail:
+        smtp:
+          starttls:
+            ssl:
+              enable: true
+  #开启热部署
+  devtools:
+    restart:
+      enabled: true
+      ###设置重启的目录
+      additional-paths: src/main/java
+      ###解决项目自动重新编译后接口报404的问题
+      poll-interval: 3000
+      quiet-period: 1000
+  servlet:
+    multipart:
+      max-file-size: 1000MB
+      max-request-size: 1000MB
+
+# 七牛云配置
+qiniu:
+  access-key: 你的七牛云AccessKey
+  secret-key: 你的七牛云SecretKey
+  bucket: 你的存储空间名称
+  domain: 你的七牛云域名
+
+# 应用配置
+app:
+  default-password: "123456"
+  default-avatar: 你的默认头像URL

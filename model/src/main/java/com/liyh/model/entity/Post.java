@@ -61,6 +61,7 @@ public class Post extends BaseEntity implements Serializable {
     @TableField(exist = false)
     private UserVo author;
 
+    @TableField(exist = false)
     private List<Tag> tags;
 
     @TableField(exist = false)

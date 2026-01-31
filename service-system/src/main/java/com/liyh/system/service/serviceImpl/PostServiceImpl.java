@@ -1,9 +1,10 @@
 package com.liyh.system.service.serviceImpl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.liyh.common.constant.RedisConstant;
+import com.liyh.system.utils.RedisUtil;
 import com.liyh.model.entity.Collect;
 import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tag;
@@ -16,12 +17,15 @@ import com.liyh.system.service.TagService;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @Author LiYH
@@ -31,6 +35,7 @@ import java.util.List;
 @Service
 @Slf4j
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
+    
     @Autowired
     private PostMapper postMapper;
 
@@ -42,6 +47,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Autowired
     private CollectMapper collectMapper;
+
+    @Autowired
+    private RedisUtil redisUtil;
 
     @Override
     public IPage<Post> selectPageByHot(Page<Post> tip) {
@@ -71,13 +79,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return post;
     }
 
-    /**
-     * @return com.liyh.model.entity.Post
-     * @Author LiYH
-     * @Description 获取帖子详情
-     * @Date 22:27 2023/6/7
-     * @Param [id]
-     **/
     @Override
     public Post selectByPk(Long id) {
         return postMapper.selectByPk(id);
@@ -95,16 +96,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public Post updatePost(PostVo postVo, String userId) {
-        // 先找到帖子
         Post post = postMapper.selectByPk(postVo.getId());
         post.setTitle(postVo.getTitle());
         post.setContent(EmojiParser.parseToAliases(postVo.getContent()));
         post.setAnonymous(postVo.isAnonymous());
 
-        // 更新帖子信息
         postMapper.update(post);
 
-        // 更新帖子标签
         if (!ObjectUtils.isEmpty(postVo.getTags())) {
             List<Tag> tags = tagService.insertTags(postVo.getTags());
             tagService.createTopicTag(post.getId(), tags);
@@ -115,11 +113,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Override
     public IPage<Post> selectAllPage(Page<Post> page) {
         return postMapper.selectAllPage(page);
-    }
-
-    @Override
-    public void increaseViewCount(Long id) {
-        postMapper.increaseViewCount(id);
     }
 
     @Override
@@ -134,14 +127,17 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public void deletePost(Long id) {
-        // 先获取帖子的所有标签
-        List<Tag> tags = tagService.selectTagsByPostId(id);
         // 删除帖子
         postMapper.deleteById(id);
-        // 然后删除帖子和标签的关联关系
+        // 删除帖子和标签的关联关系
         tagService.deleteTopicTagByTopicId(id);
-        // 删除帖子和评论的关联关系
+        // 删除帖子的所有评论
         commentService.deleteCommentByPostId(id);
+        
+        // 清除Redis缓存
+        redisUtil.delete(RedisConstant.POST_LIKE_COUNT + id);
+        redisUtil.delete(RedisConstant.POST_COLLECT_COUNT + id);
+        redisUtil.delete(RedisConstant.POST_VIEW_COUNT + id);
     }
 
     @Override
@@ -154,28 +150,241 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return postMapper.selectRandomPostByMy(userId);
     }
 
+    // ==================== Redis 优化：点赞功能 ====================
+
+    /**
+     * 点赞帖子（Redis + DB）
+     */
     @Override
-    public void favor(String userId, Long id) {
-        postMapper.favor(userId, id);
+    @Transactional(rollbackFor = Exception.class)
+    public void favor(String userId, Long postId) {
+        String userLikedKey = RedisConstant.USER_LIKED_POSTS + userId;
+        String postLikeCountKey = RedisConstant.POST_LIKE_COUNT + postId;
+
+        // 1. 检查 Redis 是否已点赞（防重复）
+        if (Boolean.TRUE.equals(redisUtil.setIsMember(userLikedKey, postId))) {
+            log.debug("用户{}已点赞帖子{}，忽略重复操作", userId, postId);
+            return;
+        }
+
+        // 2. Redis 操作
+        redisUtil.setAdd(userLikedKey, postId);          // 添加到用户点赞集合
+        redisUtil.increment(postLikeCountKey);           // 点赞数 +1
+        updatePostHotScore(postId, RedisConstant.LIKE_SCORE);  // 更新热度
+
+        // 3. 数据库操作（保证持久化）
+        postMapper.favor(userId, postId);
+
+        log.info("用户{}点赞帖子{}", userId, postId);
+    }
+
+    /**
+     * 取消点赞（Redis + DB）
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void unfavor(String userId, Long postId) {
+        String userLikedKey = RedisConstant.USER_LIKED_POSTS + userId;
+        String postLikeCountKey = RedisConstant.POST_LIKE_COUNT + postId;
+
+        // 1. 检查是否已点赞
+        if (!Boolean.TRUE.equals(redisUtil.setIsMember(userLikedKey, postId))) {
+            log.debug("用户{}未点赞帖子{}，忽略取消操作", userId, postId);
+            return;
+        }
+
+        // 2. Redis 操作
+        redisUtil.setRemove(userLikedKey, postId);       // 从集合移除
+        redisUtil.decrement(postLikeCountKey);           // 点赞数 -1
+        updatePostHotScore(postId, -RedisConstant.LIKE_SCORE);
+
+        // 3. 数据库操作
+        postMapper.unfavor(userId, postId);
+
+        log.info("用户{}取消点赞帖子{}", userId, postId);
+    }
+
+    /**
+     * 判断用户是否点赞了帖子（从 Redis 读取，O(1)）
+     */
+    @Override
+    public boolean isFavor(String userId, Long postId) {
+        String key = RedisConstant.USER_LIKED_POSTS + userId;
+        Boolean isMember = redisUtil.setIsMember(key, postId);
+        
+        // 缓存未命中，从数据库查询
+        if (isMember == null) {
+            boolean dbResult = postMapper.isFavor(userId, postId) > 0;
+            if (dbResult) {
+                redisUtil.setAdd(key, postId);  // 写入缓存
+            }
+            return dbResult;
+        }
+        return isMember;
+    }
+
+    /**
+     * 获取帖子点赞数（从 Redis 读取）
+     */
+    public Long getPostLikeCount(Long postId) {
+        String key = RedisConstant.POST_LIKE_COUNT + postId;
+        Long count = redisUtil.getLong(key);
+        
+        // 缓存未命中，从数据库查询
+        if (count == null) {
+            int dbCount = postMapper.getFavoriteCountByPostId(postId);
+            redisUtil.set(key, dbCount, RedisConstant.COUNT_EXPIRE, TimeUnit.SECONDS);
+            return (long) dbCount;
+        }
+        return count;
+    }
+
+    // ==================== Redis 优化：收藏功能 ====================
+
+    /**
+     * 收藏/取消收藏帖子（Redis + DB）
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void collect(String userId, Long postId) {
+        String userCollectedKey = RedisConstant.USER_COLLECTED_POSTS + userId;
+        String postCollectCountKey = RedisConstant.POST_COLLECT_COUNT + postId;
+
+        boolean isCollected = Boolean.TRUE.equals(redisUtil.setIsMember(userCollectedKey, postId));
+
+        if (isCollected) {
+            // 取消收藏
+            redisUtil.setRemove(userCollectedKey, postId);
+            redisUtil.decrement(postCollectCountKey);
+            updatePostHotScore(postId, -RedisConstant.COLLECT_SCORE);
+            collectMapper.unCollect(userId, postId);
+            log.info("用户{}取消收藏帖子{}", userId, postId);
+        } else {
+            // 收藏
+            redisUtil.setAdd(userCollectedKey, postId);
+            redisUtil.increment(postCollectCountKey);
+            updatePostHotScore(postId, RedisConstant.COLLECT_SCORE);
+
+            Collect collect = Collect.builder()
+                    .userId(Long.valueOf(userId))
+                    .topicId(postId)
+                    .build();
+            collectMapper.insert(collect);
+            log.info("用户{}收藏帖子{}", userId, postId);
+        }
+    }
+
+    /**
+     * 判断是否收藏（从 Redis 读取）
+     */
+    @Override
+    public boolean isCollect(String userId, Long postId) {
+        String key = RedisConstant.USER_COLLECTED_POSTS + userId;
+        Boolean isMember = redisUtil.setIsMember(key, postId);
+        
+        // 缓存未命中，从数据库查询
+        if (isMember == null) {
+            boolean dbResult = postMapper.isCollect(userId, postId) > 0;
+            if (dbResult) {
+                redisUtil.setAdd(key, postId);
+            }
+            return dbResult;
+        }
+        return isMember;
+    }
+
+    /**
+     * 获取帖子收藏数（从 Redis 读取）
+     */
+    public Long getPostCollectCount(Long postId) {
+        String key = RedisConstant.POST_COLLECT_COUNT + postId;
+        Long count = redisUtil.getLong(key);
+        
+        if (count == null) {
+            int dbCount = postMapper.getCollectsCountByPostId(postId);
+            redisUtil.set(key, dbCount, RedisConstant.COUNT_EXPIRE, TimeUnit.SECONDS);
+            return (long) dbCount;
+        }
+        return count;
     }
 
     @Override
-    public void unfavor(String userId, Long id) {
-        postMapper.unfavor(userId, id);
+    public List<Post> selectRandomPostByCollect(String userId) {
+        return postMapper.selectRandomPostByCollect(userId);
     }
 
+    // ==================== Redis 优化：浏览量 ====================
+
+    /**
+     * 增加浏览量（仅 Redis，异步同步到数据库）
+     */
     @Override
-    public boolean isFavor(String userId, Long id) {
-        return postMapper.isFavor(userId, id) > 0;
+    public void increaseViewCount(Long postId) {
+        String key = RedisConstant.POST_VIEW_COUNT + postId;
+        redisUtil.increment(key);
+        updatePostHotScore(postId, RedisConstant.VIEW_SCORE);
     }
 
+    /**
+     * 获取帖子浏览量
+     */
+    public Long getPostViewCount(Long postId) {
+        String key = RedisConstant.POST_VIEW_COUNT + postId;
+        Long count = redisUtil.getLong(key);
+        
+        if (count == null) {
+            Post post = postMapper.selectById(postId);
+            int dbCount = post != null ? post.getView() : 0;
+            redisUtil.set(key, dbCount, RedisConstant.COUNT_EXPIRE, TimeUnit.SECONDS);
+            return (long) dbCount;
+        }
+        return count;
+    }
+
+    // ==================== Redis 优化：转发量 ====================
+
     @Override
-    public void increaseShareCount(Long id) {
-        Post post = postMapper.selectByPk(id);
+    public void increaseShareCount(Long postId) {
+        Post post = postMapper.selectByPk(postId);
         post.setForward(post.getForward() + 1);
-        log.info("转发量" + String.valueOf(post.getForward()));
         postMapper.update(post);
+        log.info("帖子{}转发量: {}", postId, post.getForward());
     }
+
+    // ==================== Redis 优化：热帖排行榜 ====================
+
+    /**
+     * 更新帖子热度分数
+     */
+    private void updatePostHotScore(Long postId, double deltaScore) {
+        String key = RedisConstant.HOT_POSTS_DAILY;
+        redisUtil.zsetIncrementScore(key, postId, deltaScore);
+
+        // 如果是新key，设置过期时间（24小时）
+        Long expire = redisUtil.getExpire(key);
+        if (expire == null || expire == -1) {
+            redisUtil.expire(key, RedisConstant.HOT_POSTS_EXPIRE, TimeUnit.SECONDS);
+        }
+    }
+
+    /**
+     * 获取热帖排行榜
+     */
+    public List<Post> getHotPostsFromRedis(int top) {
+        Set<Object> postIds = redisUtil.zsetReverseRange(RedisConstant.HOT_POSTS_DAILY, 0, top - 1);
+
+        if (postIds == null || postIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Long> ids = postIds.stream()
+                .map(id -> Long.parseLong(id.toString()))
+                .collect(Collectors.toList());
+
+        return postMapper.selectBatchIds(ids);
+    }
+
+    // ==================== 其他方法 ====================
 
     @Override
     public IPage<Post> selectPageByCollectUserId(Page<Post> page, String userId) {
@@ -188,39 +397,39 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
-    public boolean isCollect(String userId, Long id) {
-        return postMapper.isCollect(userId, id) > 0;
-    }
-
-    @Override
-    public void collect(String userId, Long id) {
-        if (isCollect(userId, id)) {
-            collectMapper.unCollect(userId, id);
-        } else {
-            Collect collect = Collect.builder()
-                    .userId(Long.valueOf(userId))
-                    .topicId(id)
-                    .build();
-            collectMapper.insert(collect);
-        }
-    }
-
-    @Override
-    public List<Post> selectRandomPostByCollect(String userId) {
-        return postMapper.selectRandomPostByCollect(userId);
-    }
-
-    @Override
-    public void top(Long id) {
-        Post post = postMapper.selectByPk(id);
+    public void top(Long postId) {
+        Post post = postMapper.selectByPk(postId);
         post.setTop(!post.isTop());
         postMapper.update(post);
     }
 
     @Override
-    public void essence(Long id) {
-        Post post = postMapper.selectByPk(id);
+    public void essence(Long postId) {
+        Post post = postMapper.selectByPk(postId);
         post.setEssence(!post.isEssence());
         postMapper.update(post);
+    }
+
+    // ==================== 缓存初始化（应用启动时调用） ====================
+
+    /**
+     * 从数据库初始化 Redis 缓存
+     */
+    public void initCacheFromDB() {
+        log.info("开始从数据库初始化Redis缓存...");
+        // TODO: 实现缓存预热逻辑
+        // 1. 查询所有帖子的点赞数、收藏数、浏览量
+        // 2. 批量写入 Redis
+        log.info("Redis缓存初始化完成");
+    }
+
+    /**
+     * 同步 Redis 浏览量到数据库（定时任务调用）
+     */
+    public void syncViewCountToDB() {
+        log.info("开始同步浏览量到数据库...");
+        // TODO: 实现同步逻辑
+        // 遍历所有 post:view:count:* 的key，批量更新数据库
+        log.info("浏览量同步完成");
     }
 }

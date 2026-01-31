@@ -3,6 +3,7 @@ package com.liyh.system.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.liyh.model.entity.Comment;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -14,17 +15,17 @@ import java.util.List;
 @Mapper
 public interface CommentMapper extends BaseMapper<Comment> {
 
-    List<Comment> getTopicCommentListByTopicId(Long id);
+    List<Comment> getTopicCommentListByTopicId(@Param("id") Long id);
 
-    List<Comment> findChildrenComments(Long id);
+    List<Comment> findChildrenComments(@Param("id") Long id);
 
-    int isFavor(Long id, Long userId);
+    int isFavor(@Param("id") Long id, @Param("userId") Long userId);
 
-    void favor(Long commentId, Long userId);
+    void favor(@Param("commentId") Long commentId, @Param("userId") Long userId);
 
-    void unFavor(Long commentId, Long userId);
+    void unFavor(@Param("commentId") Long commentId, @Param("userId") Long userId);
 
-    Long getFavorsCount(Long id);
+    Long getFavorsCount(@Param("id") Long id);
 
-    void deleteCommentByPostId(Long id);
+    void deleteCommentByPostId(@Param("id") Long id);
 }

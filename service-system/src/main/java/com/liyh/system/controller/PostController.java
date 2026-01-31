@@ -12,6 +12,7 @@ import com.liyh.model.vo.FollowerVo;
 import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.PostVo;
 import com.liyh.model.vo.UserVo;
+import com.liyh.system.annotation.RedisLock;
 import com.liyh.system.service.FollowService;
 import com.liyh.system.service.PostService;
 import com.liyh.system.service.SysUserService;
@@ -65,6 +66,8 @@ public class PostController {
 
     @ApiOperation("发布帖子")
     @PostMapping("/front/post/save")
+    @RedisLock(prefix = "lock:post:save:", key = "#request.getHeader('Authorization')", 
+               expireTime = 5, message = "发帖太频繁，请5秒后再试")
     public Result save(@RequestBody PostVo postVo, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         Post post = postService.savePost(postVo, userId);

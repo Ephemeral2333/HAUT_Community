@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Follow;
 import com.liyh.model.vo.FollowerVo;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -17,11 +18,11 @@ import java.util.List;
 @Mapper
 public interface FollowMapper extends BaseMapper<Follow> {
 
-    void follow(String userId, Long parentId);
+    void follow(@Param("userId") String userId, @Param("parentId") Long parentId);
 
-    void unfollow(String userId, Long parentId);
+    void unfollow(@Param("userId") String userId, @Param("parentId") Long parentId);
 
-    int isFollow(Long id, String userId);
+    int isFollow(@Param("id") Long id, @Param("userId") String userId);
 
     /**
      * @return java.lang.Integer
@@ -30,9 +31,9 @@ public interface FollowMapper extends BaseMapper<Follow> {
      * @Date 22:42 2023/6/11
      * @Param [userId]
      **/
-    Integer selectFollowerCountByUserId(String userId);
+    Integer selectFollowerCountByUserId(@Param("userId") String userId);
 
-    IPage<FollowerVo> getFollowList(Page<FollowerVo> pageParam, Long id);
+    IPage<FollowerVo> getFollowList(@Param("page") Page<FollowerVo> pageParam, @Param("id") Long id);
 
-    IPage<FollowerVo> getFansList(Page<FollowerVo> pageParam, Long id);
+    IPage<FollowerVo> getFansList(@Param("page") Page<FollowerVo> pageParam, @Param("id") Long id);
 }

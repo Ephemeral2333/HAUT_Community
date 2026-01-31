@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Collect;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @Author LiYH
@@ -14,5 +15,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CollectMapper extends BaseMapper<Collect> {
 
-    void unCollect(String userId, Long id);
+    void unCollect(@Param("userId") String userId, @Param("id") Long id);
 }

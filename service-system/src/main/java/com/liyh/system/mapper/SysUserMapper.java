@@ -11,25 +11,25 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface SysUserMapper extends BaseMapper<SysUser> {
-    IPage<SysUser> selectPage(Page<SysUser> page, @Param("vo") SysUserQueryVo userQueryVo);
+    IPage<SysUser> selectPage(@Param("page") Page<SysUser> page, @Param("vo") SysUserQueryVo userQueryVo);
 
-    SysUser selectByUserName(String username);
+    SysUser selectByUserName(@Param("username") String username);
 
-    void updateByEntity(SysUser user);
+    void updateByEntity(@Param("user") SysUser user);
 
-    SysUser selectByEmail(String email);
+    SysUser selectByEmail(@Param("email") String email);
 
-    UserVo getFrontInfo(Long id);
+    UserVo getFrontInfo(@Param("id") Long id);
 
-    String getNameById(Long id);
+    String getNameById(@Param("id") Long id);
 
-    String getAvatarById(Long id);
+    String getAvatarById(@Param("id") Long id);
 
-    String selectNickNameById(Long id);
+    String selectNickNameById(@Param("id") Long id);
 
-    void updatePhoto(String url, Long id);
+    void updatePhoto(@Param("url") String url, @Param("id") Long id);
 
-    String getEmailById(Long id);
+    String getEmailById(@Param("id") Long id);
 
-    void updateProfile(UserVo userVo);
+    void updateProfile(@Param("userVo") UserVo userVo);
 }

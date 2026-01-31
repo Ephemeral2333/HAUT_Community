@@ -3,6 +3,7 @@ package com.liyh.system.controller;
 import com.liyh.common.result.Result;
 import com.liyh.common.utils.JwtHelper;
 import com.liyh.model.vo.CommentPostVo;
+import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.service.CommentService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -36,6 +37,8 @@ public class CommentController {
 
     @ApiOperation(value = "评论操作")
     @PostMapping("/admin/comments/pushComments")
+    @RateLimit(prefix = "limit:comment:", limitType = RateLimit.LimitType.USER, limit = 1, period = 10,
+               message = "评论太频繁，请10秒后再试")
     public Result pushComments(@RequestBody CommentPostVo commentPostVo, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         if (userId != null) {
@@ -60,6 +63,8 @@ public class CommentController {
 
     @ApiOperation("对评论进行回复")
     @PostMapping("/admin/comments/reply")
+    @RateLimit(prefix = "limit:reply:", limitType = RateLimit.LimitType.USER, limit = 1, period = 10,
+               message = "回复太频繁，请10秒后再试")
     public Result replyComment(@RequestBody CommentPostVo commentPostVo, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         if (userId != null) {

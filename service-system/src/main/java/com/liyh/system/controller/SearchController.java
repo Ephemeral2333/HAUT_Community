@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
 import com.liyh.model.entity.Post;
 import com.liyh.model.vo.PostVo;
+import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.service.PostService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,6 +32,8 @@ public class SearchController {
 
     @ApiOperation(value = "搜索")
     @GetMapping("/search")
+    @RateLimit(prefix = "limit:search:", limitType = RateLimit.LimitType.IP, limit = 10, period = 10,
+               message = "搜索太频繁，请稍后再试")
     public Result search(@RequestParam("keyword") String keyWord,
                          @RequestParam("pageNum") Integer pageNum,
                          @RequestParam("pageSize") Integer pageSize) {

@@ -8,6 +8,7 @@ import com.liyh.model.entity.Tip;
 import com.liyh.model.entity.TipPost;
 import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.TipPostVo;
+import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.service.TipPostService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,6 +33,8 @@ public class TipPostController {
 
     @ApiOperation(value = "投稿")
     @PostMapping("/tip/post")
+    @RateLimit(prefix = "limit:tippost:", limitType = RateLimit.LimitType.USER, limit = 3, period = 86400,
+               message = "今日投稿次数已达上限（每天最多3次）")
     public Result add(@RequestBody TipPostVo tipPostVo, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         tipPostService.tipPost(tipPostVo, userId);

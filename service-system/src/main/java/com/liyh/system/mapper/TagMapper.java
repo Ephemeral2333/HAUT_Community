@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Tag;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -15,17 +16,17 @@ import java.util.List;
  **/
 @Mapper
 public interface TagMapper extends BaseMapper<Tag> {
-    List<Tag> selectTagsByPostId(Long id);
+    List<Tag> selectTagsByPostId(@Param("id") Long id);
 
-    void createTopicTag(Long post, Long tag);
+    void createTopicTag(@Param("post") Long post, @Param("tag") Long tag);
 
-    void deletePostTagByTopicId(Long topicId);
+    void deletePostTagByTopicId(@Param("topicId") Long topicId);
 
-    IPage<Tag> selectTagList(Page<Tag> tagPage);
+    IPage<Tag> selectTagList(@Param("page") Page<Tag> tagPage);
 
-    void deletePostTagByTagId(Long id);
+    void deletePostTagByTagId(@Param("id") Long id);
 
     List<Tag> getHotTags();
 
-    int selectCountByTagId(Long id);
+    int selectCountByTagId(@Param("id") Long id);
 }

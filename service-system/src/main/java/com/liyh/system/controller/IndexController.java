@@ -11,6 +11,7 @@ import com.liyh.model.vo.LoginVo;
 import com.liyh.model.vo.RegisterVo;
 import com.liyh.model.vo.UserVo;
 import com.liyh.system.exception.AuthException;
+import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.service.EmailService;
 import com.liyh.system.service.SysUserService;
 import io.swagger.annotations.Api;
@@ -55,6 +56,8 @@ public class IndexController {
      * @Param
      **/
     @PostMapping("/login")
+    @RateLimit(prefix = "limit:login:", key = "#loginVo.username", limit = 5, period = 60,
+               message = "登录失败次数过多，请1分钟后再试")
     public Result login(@RequestBody LoginVo loginVo) {
         // 根据用户名查询数据库
         SysUser sysUser = sysUserService.getByUsername(loginVo.getUsername());
@@ -76,6 +79,8 @@ public class IndexController {
 
     @ApiOperation(value = "注册")
     @PostMapping("/register")
+    @RateLimit(prefix = "limit:register:", limitType = RateLimit.LimitType.IP, limit = 3, period = 60,
+               message = "注册太频繁，请1分钟后再试")
     public Result register(@RequestBody RegisterVo registerVo) throws Exception {
         if (sysUserService.getByUsername(registerVo.getUsername()) != null) {
             return Result.alreadyUserName();
@@ -90,6 +95,8 @@ public class IndexController {
 
     @ApiOperation(value = "发送邮箱验证码")
     @GetMapping("sendCode")
+    @RateLimit(prefix = "limit:email:", key = "#email", limit = 1, period = 60,
+               message = "验证码发送太频繁，请60秒后再试")
     public Result sendCode(@RequestParam String email) {
         if (sysUserService.getByEmail(email) != null) {
             return Result.ok("该邮箱已被注册");

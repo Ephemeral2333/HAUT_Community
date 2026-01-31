@@ -7,6 +7,7 @@ import com.liyh.model.entity.Post;
 import com.liyh.model.entity.Tip;
 import com.liyh.model.entity.TipPost;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -20,5 +21,5 @@ public interface TipMapper extends BaseMapper<Tip> {
 
     Tip getRandomTip();
 
-    IPage<Tip> selectPage(Page<Tip> tip);
+    IPage<Tip> selectPage(@Param("page") Page<Tip> tip);
 }

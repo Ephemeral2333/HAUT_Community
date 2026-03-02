@@ -66,6 +66,7 @@
         from post
         <where>
             is_deleted = 0
+            AND (status IS NULL OR status = 1)
         </where>
         order by top desc, view desc, create_time desc
     </select>
@@ -75,6 +76,7 @@
         from post
         <where>
             is_deleted = 0
+            AND (status IS NULL OR status = 1)
         </where>
         order by top desc, create_time desc
     </select>
@@ -102,7 +104,7 @@
     <select id="selectPostRandom" resultType="com.liyh.model.entity.Post">
         select *
         from post
-        where is_deleted = 0
+        where is_deleted = 0 AND (status IS NULL OR status = 1)
         order by rand()
         limit 10
     </select>
@@ -112,6 +114,7 @@
         from post
         <where>
             is_deleted = 0
+            AND (status IS NULL OR status = 1)
         </where>
         order by create_time desc
     </select>
@@ -125,6 +128,7 @@
         where tag_id = #{id}
         )
         and is_deleted = 0
+        and (status IS NULL OR status = 1)
         order by create_time desc
     </select>
     <select id="searchByKeyword" resultType="com.liyh.model.entity.Post" resultMap="includeUser">
@@ -132,6 +136,7 @@
         <include refid="columns"/>
         from post
         where is_deleted = 0
+        and (status IS NULL OR status = 1)
         and
         (
         (title like concat('%', #{keyword}, '%') or content like concat('%', #{keyword}, '%'))
@@ -169,7 +174,7 @@
         select *
         from post
         where is_deleted = 0
-          and user_id = #{id}
+          and user_id = #{userId}
         order by rand()
         limit 5
     </select>

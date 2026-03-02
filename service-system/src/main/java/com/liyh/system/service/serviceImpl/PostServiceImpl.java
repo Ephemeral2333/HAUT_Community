@@ -13,7 +13,10 @@ import com.liyh.system.mapper.CollectMapper;
 import com.liyh.system.mapper.PostMapper;
 import com.liyh.system.service.CommentService;
 import com.liyh.system.service.PostService;
+import com.liyh.system.service.SysUserService;
 import com.liyh.system.service.TagService;
+import com.liyh.system.mq.producer.MessageProducer;
+import com.liyh.model.system.SysUser;
 import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +53,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Autowired
     private RedisUtil redisUtil;
+
+    @Autowired
+    private MessageProducer messageProducer;
+
+    @Autowired
+    private SysUserService sysUserService;
 
     @Override
     public IPage<Post> selectPageByHot(Page<Post> tip) {
@@ -174,6 +183,25 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
         // 3. 数据库操作（保证持久化）
         postMapper.favor(userId, postId);
+
+        // 4. 发送点赞通知
+        try {
+            Post post = postMapper.selectById(postId);
+            if (post != null && !post.getUserId().equals(userId)) {
+                SysUser fromUser = sysUserService.getById(Long.parseLong(userId));
+                if (fromUser != null) {
+                    messageProducer.sendLikeNotify(
+                            Long.parseLong(userId),
+                            fromUser.getUsername(),
+                            post.getUserId(),
+                            postId,
+                            post.getTitle()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            log.warn("发送点赞通知失败: {}", e.getMessage());
+        }
 
         log.info("用户{}点赞帖子{}", userId, postId);
     }
@@ -431,5 +459,82 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         // TODO: 实现同步逻辑
         // 遍历所有 post:view:count:* 的key，批量更新数据库
         log.info("浏览量同步完成");
+    }
+
+    // ==================== 定时发布功能 ====================
+
+    /**
+     * 发布定时帖子（将草稿状态改为已发布）
+     * 由延迟消息消费者调用
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void publishScheduledPost(Long postId) {
+        Post post = postMapper.selectById(postId);
+        if (post == null) {
+            log.warn("定时发布失败：帖子不存在, postId={}", postId);
+            return;
+        }
+        
+        if (post.getIsDeleted() == 1) {
+            log.info("定时发布跳过：帖子已删除, postId={}", postId);
+            return;
+        }
+        
+        // 检查是否已发布（防止重复处理）
+        if (post.getStatus() != null && post.getStatus() == 1) {
+            log.info("定时发布跳过：帖子已发布, postId={}", postId);
+            return;
+        }
+        
+        // 更新帖子状态为已发布，更新时间为当前时间（让帖子出现在最新列表）
+        post.setStatus(1);  // 已发布
+        post.setUpdateTime(new java.util.Date());
+        postMapper.updateById(post);
+        
+        // 更新热度排行榜
+        updatePostHotScore(postId, RedisConstant.VIEW_SCORE);
+        
+        log.info("定时发布成功: postId={}, title={}", postId, post.getTitle());
+    }
+
+    /**
+     * 保存定时发布的帖子（待发布状态）
+     * 帖子会立即保存到数据库（status=0），延迟消息到达后改为已发布（status=1）
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long saveScheduledPost(PostVo postVo, String userId, java.util.Date publishTime) {
+        // 保存帖子，设置状态为待发布（status=0）
+        Post post = Post.builder()
+                .title(postVo.getTitle())
+                .content(EmojiParser.parseToAliases(postVo.getContent()))
+                .userId(Long.valueOf(userId))
+                .anonymous(postVo.isAnonymous())
+                .status(0)  // 待发布状态
+                .build();
+        postMapper.insert(post);
+        
+        // 处理标签
+        List<Long> tagIds = new ArrayList<>();
+        if (!ObjectUtils.isEmpty(postVo.getTags())) {
+            List<Tag> tags = tagService.insertTags(postVo.getTags());
+            tagService.createTopicTag(post.getId(), tags);
+            tagIds = tags.stream().map(Tag::getId).collect(Collectors.toList());
+        }
+        
+        // 发送延迟消息
+        messageProducer.sendDelayedPostPublish(
+                post.getId(),
+                Long.valueOf(userId),
+                post.getTitle(),
+                post.getContent(),
+                tagIds,
+                postVo.isAnonymous(),
+                publishTime
+        );
+        
+        log.info("定时发布帖子已保存: postId={}, publishTime={}", post.getId(), publishTime);
+        return post.getId();
     }
 }

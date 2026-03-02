@@ -41,3 +41,4 @@ application-local.yml
 *.log
 logs/
 service-system/src/main/resources/application-dev.yml
+docs/

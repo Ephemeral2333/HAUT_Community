@@ -2,10 +2,12 @@ package com.liyh.system.mq.consumer;
 
 import com.liyh.model.vo.message.NotifyMessage;
 import com.liyh.system.config.RabbitMQConfig;
+import com.liyh.system.service.NotificationService;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -20,6 +22,9 @@ import java.io.IOException;
 @Slf4j
 public class NotifyConsumer {
 
+    @Autowired
+    private NotificationService notificationService;
+
     /**
      * 处理点赞通知
      */
@@ -33,9 +38,8 @@ public class NotifyConsumer {
                     notifyMessage.getToUserId(),
                     notifyMessage.getTargetId());
             
-            // TODO: 将通知保存到数据库，或通过 WebSocket 推送给用户
-            // notifyService.saveNotify(notifyMessage);
-            // webSocketService.pushToUser(notifyMessage.getToUserId(), notifyMessage);
+            // 保存通知到数据库
+            notificationService.saveFromMQ(notifyMessage);
             
             // 消息确认
             channel.basicAck(deliveryTag, false);
@@ -58,8 +62,8 @@ public class NotifyConsumer {
                     notifyMessage.getFromUsername(), 
                     notifyMessage.getToUserId());
             
-            // TODO: 将通知保存到数据库
-            // notifyService.saveNotify(notifyMessage);
+            // 保存通知到数据库
+            notificationService.saveFromMQ(notifyMessage);
             
             channel.basicAck(deliveryTag, false);
             
@@ -81,8 +85,8 @@ public class NotifyConsumer {
                     notifyMessage.getFromUsername(), 
                     notifyMessage.getToUserId());
             
-            // TODO: 将通知保存到数据库
-            // notifyService.saveNotify(notifyMessage);
+            // 保存通知到数据库
+            notificationService.saveFromMQ(notifyMessage);
             
             channel.basicAck(deliveryTag, false);
             

@@ -29,7 +29,7 @@ public interface PostMapper extends BaseMapper<Post> {
 
     List<Post> selectPostRandom();
 
-    void update(@Param("post") Post post);
+    void update(Post post);
 
     IPage<Post> selectAllPage(@Param("page") Page<Post> page);
 

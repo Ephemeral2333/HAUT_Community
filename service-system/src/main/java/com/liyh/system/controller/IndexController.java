@@ -12,7 +12,7 @@ import com.liyh.model.vo.RegisterVo;
 import com.liyh.model.vo.UserVo;
 import com.liyh.system.exception.AuthException;
 import com.liyh.system.annotation.RateLimit;
-import com.liyh.system.service.EmailService;
+import com.liyh.system.mq.producer.MessageProducer;
 import com.liyh.system.service.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -43,7 +43,7 @@ public class IndexController {
     private SysUserService sysUserService;
 
     @Autowired
-    private EmailService emailService;
+    private MessageProducer messageProducer;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -101,11 +101,12 @@ public class IndexController {
         if (sysUserService.getByEmail(email) != null) {
             return Result.ok("该邮箱已被注册");
         }
-        log.info(email);
+        log.info("发送验证码到邮箱: {}", email);
         String verifyCode = VCodeUtil.verifyCode(6);
         redisTemplate.opsForValue().set(email + "verify", verifyCode, 5 * 60, TimeUnit.SECONDS);
-        log.info(verifyCode);
-        emailService.sendEmail(email, verifyCode);
+        log.info("验证码: {}", verifyCode);
+        // 异步发送邮件（通过 RabbitMQ）
+        messageProducer.sendVerifyCodeEmail(email, verifyCode);
         return Result.ok();
     }
 

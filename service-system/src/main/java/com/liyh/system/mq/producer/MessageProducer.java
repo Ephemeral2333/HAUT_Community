@@ -1,14 +1,18 @@
 package com.liyh.system.mq.producer;
 
+import com.liyh.model.vo.message.BroadcastMessage;
+import com.liyh.model.vo.message.DelayedPostMessage;
 import com.liyh.model.vo.message.EmailMessage;
 import com.liyh.model.vo.message.NotifyMessage;
 import com.liyh.system.config.RabbitMQConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -86,7 +90,7 @@ public class MessageProducer {
                 .targetId(postId)
                 .targetTitle(postTitle)
                 .content(fromUsername + " 赞了你的帖子")
-                .createTime(LocalDateTime.now())
+                .createTime(new Date())
                 .build();
 
         log.info("发送点赞通知 - 从 {} 到 {}, 帖子: {}", fromUserId, toUserId, postId);
@@ -116,7 +120,7 @@ public class MessageProducer {
                 .targetId(postId)
                 .targetTitle(postTitle)
                 .content(fromUsername + " 评论了你的帖子：" + contentSummary)
-                .createTime(LocalDateTime.now())
+                .createTime(new Date())
                 .build();
 
         log.info("发送评论通知 - 从 {} 到 {}, 帖子: {}", fromUserId, toUserId, postId);
@@ -144,7 +148,7 @@ public class MessageProducer {
                 .type(NotifyMessage.NotifyType.REPLY_COMMENT)
                 .targetId(commentId)
                 .content(fromUsername + " 回复了你：" + contentSummary)
-                .createTime(LocalDateTime.now())
+                .createTime(new Date())
                 .build();
 
         log.info("发送回复通知 - 从 {} 到 {}", fromUserId, toUserId);
@@ -166,13 +170,166 @@ public class MessageProducer {
                 .toUserId(toUserId)
                 .type(NotifyMessage.NotifyType.FOLLOW)
                 .content(fromUsername + " 关注了你")
-                .createTime(LocalDateTime.now())
+                .createTime(new Date())
                 .build();
 
         log.info("发送关注通知 - {} 关注了 {}", fromUserId, toUserId);
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.NOTIFY_EXCHANGE,
                 RabbitMQConfig.FOLLOW_ROUTING_KEY,
+                message
+        );
+    }
+
+    // ==================== 延迟消息（定时发布，使用延迟插件） ====================
+
+    /**
+     * 发送延迟发布帖子消息
+     * 使用 rabbitmq_delayed_message_exchange 插件实现
+     *
+     * @param postId      帖子ID（草稿状态）
+     * @param userId      用户ID
+     * @param title       帖子标题
+     * @param content     帖子内容
+     * @param tagIds      标签ID列表
+     * @param anonymous   是否匿名
+     * @param publishTime 计划发布时间
+     */
+    public void sendDelayedPostPublish(Long postId, Long userId, String title, String content,
+                                        List<Long> tagIds, Boolean anonymous, Date publishTime) {
+        // 计算延迟时间（毫秒）
+        long delayMillis = publishTime.getTime() - System.currentTimeMillis();
+        
+        if (delayMillis <= 0) {
+            log.warn("定时发布时间已过期，将立即发布: postId={}", postId);
+            delayMillis = 1000; // 最小延迟1秒
+        }
+
+        // 延迟插件最大支持约 49 天（2^32 - 1 毫秒）
+        long maxDelay = Integer.MAX_VALUE;
+        if (delayMillis > maxDelay) {
+            log.warn("延迟时间超过最大限制: postId={}", postId);
+            delayMillis = maxDelay;
+        }
+
+        DelayedPostMessage message = DelayedPostMessage.builder()
+                .messageId(UUID.randomUUID().toString())
+                .postId(postId)
+                .userId(userId)
+                .title(title)
+                .content(content)
+                .tagIds(tagIds)
+                .anonymous(anonymous)
+                .publishTime(publishTime)
+                .createTime(new Date())
+                .delayMillis(delayMillis)
+                .build();
+
+        // 使用 x-delay 头设置延迟时间（插件方案）
+        final long finalDelayMillis = delayMillis;
+        MessagePostProcessor messagePostProcessor = msg -> {
+            msg.getMessageProperties().setDelay((int) finalDelayMillis);  // x-delay 头
+            return msg;
+        };
+
+        log.info("发送定时发布消息 - postId: {}, 延迟: {}ms, 计划发布时间: {}", 
+                postId, delayMillis, publishTime);
+        
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.DELAY_EXCHANGE,
+                RabbitMQConfig.DELAY_ROUTING_KEY,
+                message,
+                messagePostProcessor
+        );
+    }
+
+    /**
+     * 取消定时发布（通过更新帖子状态实现，消息到达后检查状态）
+     * 注意：RabbitMQ不支持直接删除已发送的消息，需要在消费时检查状态
+     */
+    public void cancelDelayedPost(Long postId) {
+        log.info("标记取消定时发布: postId={}", postId);
+        // 实际取消逻辑在数据库层面实现，消费者处理时会检查帖子状态
+    }
+
+    // ==================== 广播消息（系统公告） ====================
+
+    /**
+     * 广播系统公告
+     *
+     * @param title      公告标题
+     * @param content    公告内容
+     * @param targetId   公告ID
+     * @param senderId   发送者ID
+     * @param senderName 发送者用户名
+     */
+    public void broadcastAnnouncement(String title, String content, Long targetId,
+                                       Long senderId, String senderName) {
+        BroadcastMessage message = BroadcastMessage.builder()
+                .messageId(UUID.randomUUID().toString())
+                .type(BroadcastMessage.BroadcastType.ANNOUNCEMENT)
+                .title(title)
+                .content(content)
+                .targetId(targetId)
+                .senderId(senderId)
+                .senderName(senderName)
+                .createTime(new Date())
+                .build();
+
+        log.info("广播系统公告 - 标题: {}, 发送者: {}", title, senderName);
+        
+        // Fanout交换机不需要路由键，消息会发送到所有绑定的队列
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.BROADCAST_EXCHANGE,
+                "", // Fanout交换机忽略路由键
+                message
+        );
+    }
+
+    /**
+     * 广播系统维护通知
+     */
+    public void broadcastMaintenance(String title, String content, Long senderId, String senderName) {
+        BroadcastMessage message = BroadcastMessage.builder()
+                .messageId(UUID.randomUUID().toString())
+                .type(BroadcastMessage.BroadcastType.MAINTENANCE)
+                .title(title)
+                .content(content)
+                .senderId(senderId)
+                .senderName(senderName)
+                .createTime(new Date())
+                .build();
+
+        log.info("广播系统维护通知 - 标题: {}", title);
+        
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.BROADCAST_EXCHANGE,
+                "",
+                message
+        );
+    }
+
+    /**
+     * 广播活动通知
+     */
+    public void broadcastActivity(String title, String content, Long targetId,
+                                   Long senderId, String senderName) {
+        BroadcastMessage message = BroadcastMessage.builder()
+                .messageId(UUID.randomUUID().toString())
+                .type(BroadcastMessage.BroadcastType.ACTIVITY)
+                .title(title)
+                .content(content)
+                .targetId(targetId)
+                .senderId(senderId)
+                .senderName(senderName)
+                .createTime(new Date())
+                .build();
+
+        log.info("广播活动通知 - 标题: {}", title);
+        
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.BROADCAST_EXCHANGE,
+                "",
                 message
         );
     }

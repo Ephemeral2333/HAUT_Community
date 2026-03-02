@@ -4,8 +4,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liyh.common.constant.RedisConstant;
 import com.liyh.system.utils.RedisUtil;
 import com.liyh.model.entity.Comment;
+import com.liyh.model.entity.Post;
+import com.liyh.model.system.SysUser;
 import com.liyh.model.vo.CommentPostVo;
 import com.liyh.system.mapper.CommentMapper;
+import com.liyh.system.mapper.PostMapper;
+import com.liyh.system.mapper.SysUserMapper;
+import com.liyh.system.mq.producer.MessageProducer;
 import com.liyh.system.service.CommentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +32,15 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     @Autowired
     private RedisUtil redisUtil;
+
+    @Autowired
+    private MessageProducer messageProducer;
+
+    @Autowired
+    private PostMapper postMapper;
+
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     /**
      * 获取某话题评论列表
@@ -64,6 +78,26 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         // 更新帖子评论数（Redis）
         String key = RedisConstant.POST_COMMENT_COUNT + commentPostVo.getTopicId();
         redisUtil.increment(key);
+        
+        // 发送评论通知
+        try {
+            Post post = postMapper.selectById(commentPostVo.getTopicId());
+            if (post != null && !post.getUserId().equals(String.valueOf(userId))) {
+                SysUser fromUser = sysUserMapper.selectById(userId);
+                if (fromUser != null) {
+                    messageProducer.sendCommentNotify(
+                            userId,
+                            fromUser.getUsername(),
+                            post.getUserId(),
+                            post.getId(),
+                            post.getTitle(),
+                            commentPostVo.getContent()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            log.warn("发送评论通知失败: {}", e.getMessage());
+        }
         
         log.info("用户{}发布评论，帖子ID: {}", userId, commentPostVo.getTopicId());
     }
@@ -142,6 +176,25 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         // 更新帖子评论数
         String key = RedisConstant.POST_COMMENT_COUNT + commentPostVo.getTopicId();
         redisUtil.increment(key);
+        
+        // 发送回复通知
+        try {
+            Comment parentComment = commentMapper.selectById(commentPostVo.getId());
+            if (parentComment != null && !parentComment.getUserId().equals(userId)) {
+                SysUser fromUser = sysUserMapper.selectById(userId);
+                if (fromUser != null) {
+                    messageProducer.sendReplyNotify(
+                            userId,
+                            fromUser.getUsername(),
+                            parentComment.getUserId(),
+                            parentComment.getId(),
+                            commentPostVo.getContent()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            log.warn("发送回复通知失败: {}", e.getMessage());
+        }
         
         log.info("用户{}回复评论{}", userId, commentPostVo.getId());
     }

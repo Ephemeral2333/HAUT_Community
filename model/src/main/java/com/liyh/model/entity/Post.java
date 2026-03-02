@@ -58,6 +58,12 @@ public class Post extends BaseEntity implements Serializable {
     @TableField("forward")
     private Long forward;
 
+    /**
+     * 帖子状态：0=待发布（定时发布），1=已发布
+     */
+    @TableField("status")
+    private Integer status;
+
     @TableField(exist = false)
     private UserVo author;
 

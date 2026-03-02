@@ -28,9 +28,9 @@ public class DelayedPostConsumer {
 
     /**
      * 处理延迟发布的帖子消息
-     * 从死信队列消费（消息TTL过期后自动转发到此队列）
+     * 使用延迟插件，消息延迟后直接投递到此队列
      */
-    @RabbitListener(queues = RabbitMQConfig.DELAY_PROCESS_QUEUE)
+    @RabbitListener(queues = RabbitMQConfig.DELAY_QUEUE)
     public void handleDelayedPost(DelayedPostMessage message, Message msg, Channel channel) {
         long deliveryTag = msg.getMessageProperties().getDeliveryTag();
 

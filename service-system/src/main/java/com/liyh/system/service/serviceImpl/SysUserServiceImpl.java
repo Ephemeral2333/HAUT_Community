@@ -172,4 +172,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return new UserInfoCountVo(Long.valueOf(userId), username,
                 articleCount, likeCount, collectCount, viewCount, avatar);
     }
+
+    /**
+     * 获取所有活跃用户ID列表
+     * 用于广播通知
+     */
+    @Override
+    public List<Long> getAllActiveUserIds() {
+        QueryWrapper<SysUser> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("status", 1)  // 状态正常的用户
+                .eq("is_deleted", 0)  // 未删除的用户
+                .select("id");        // 只查询ID字段
+        
+        return sysUserMapper.selectList(queryWrapper)
+                .stream()
+                .map(SysUser::getId)
+                .collect(java.util.stream.Collectors.toList());
+    }
 }

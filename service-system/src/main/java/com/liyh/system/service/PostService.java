@@ -77,4 +77,21 @@ public interface PostService extends IService<Post> {
     void top(Long id);
 
     void essence(Long id);
+
+    /**
+     * 发布定时帖子（将草稿状态改为已发布）
+     *
+     * @param postId 帖子ID
+     */
+    void publishScheduledPost(Long postId);
+
+    /**
+     * 保存定时发布的帖子（草稿状态）
+     *
+     * @param postVo      帖子信息
+     * @param userId      用户ID
+     * @param publishTime 计划发布时间
+     * @return 帖子ID
+     */
+    Long saveScheduledPost(PostVo postVo, String userId, java.util.Date publishTime);
 }

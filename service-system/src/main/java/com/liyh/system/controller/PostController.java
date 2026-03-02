@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -270,5 +272,72 @@ public class PostController {
     public Result essence(@PathVariable Long id) {
         postService.essence(id);
         return Result.ok();
+    }
+
+    // ==================== 定时发布功能 ====================
+
+    @ApiOperation("定时发布帖子")
+    @PostMapping("/front/post/schedule")
+    @RedisLock(prefix = "lock:post:schedule:", key = "#request.getHeader('Authorization')",
+               expireTime = 5, message = "操作太频繁，请5秒后再试")
+    public Result schedulePost(@RequestBody Map<String, Object> params, HttpServletRequest request) {
+        String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        
+        // 解析帖子信息
+        String title = (String) params.get("title");
+        String content = (String) params.get("content");
+        Boolean anonymous = (Boolean) params.getOrDefault("anonymous", false);
+        @SuppressWarnings("unchecked")
+        List<String> tags = (List<String>) params.get("tags");
+        String publishTimeStr = (String) params.get("publishTime");
+        
+        // 参数校验
+        if (title == null || title.trim().isEmpty()) {
+            return Result.fail("标题不能为空");
+        }
+        if (content == null || content.trim().isEmpty()) {
+            return Result.fail("内容不能为空");
+        }
+        if (publishTimeStr == null || publishTimeStr.trim().isEmpty()) {
+            return Result.fail("发布时间不能为空");
+        }
+        
+        // 解析发布时间
+        Date publishTime;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            publishTime = sdf.parse(publishTimeStr);
+        } catch (Exception e) {
+            return Result.fail("发布时间格式错误，请使用 yyyy-MM-dd HH:mm:ss 格式");
+        }
+        
+        // 校验发布时间必须在当前时间之后
+        if (publishTime.before(new Date())) {
+            return Result.fail("发布时间必须在当前时间之后");
+        }
+        
+        // 最大延迟时间限制（49天）
+        long maxDelay = 49L * 24 * 60 * 60 * 1000;
+        if (publishTime.getTime() - System.currentTimeMillis() > maxDelay) {
+            return Result.fail("发布时间不能超过49天");
+        }
+        
+        // 构建PostVo
+        PostVo postVo = new PostVo();
+        postVo.setTitle(title);
+        postVo.setContent(content);
+        postVo.setAnonymous(anonymous);
+        postVo.setTags(tags);
+        
+        // 保存定时发布帖子
+        Long postId = postService.saveScheduledPost(postVo, userId, publishTime);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("postId", postId);
+        result.put("publishTime", publishTimeStr);
+        result.put("message", "帖子已加入定时发布队列");
+        
+        log.info("用户{}创建定时发布帖子，帖子ID: {}, 计划发布时间: {}", userId, postId, publishTimeStr);
+        return Result.ok(result);
     }
 }

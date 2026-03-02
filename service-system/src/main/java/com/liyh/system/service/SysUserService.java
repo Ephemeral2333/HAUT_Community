@@ -38,4 +38,12 @@ public interface SysUserService extends IService<SysUser> {
     void updateProfile(UserVo userVo);
 
     UserInfoCountVo getUserInfoCount(String userId);
+
+    /**
+     * 获取所有活跃用户ID列表
+     * 用于广播通知
+     *
+     * @return 用户ID列表
+     */
+    List<Long> getAllActiveUserIds();
 }

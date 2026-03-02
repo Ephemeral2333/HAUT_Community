@@ -8,7 +8,7 @@ import com.liyh.model.entity.TipPost;
 import com.liyh.model.vo.TipPostVo;
 import com.liyh.system.mapper.TipMapper;
 import com.liyh.system.mapper.TipPostMapper;
-import com.liyh.system.service.EmailService;
+import com.liyh.system.mq.producer.MessageProducer;
 import com.liyh.system.service.SysUserService;
 import com.liyh.system.service.TipPostService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class TipPostServiceImpl extends ServiceImpl<TipPostMapper, TipPost> impl
     private TipMapper tipMapper;
 
     @Autowired
-    private EmailService emailService;
+    private MessageProducer messageProducer;
 
     @Autowired
     private SysUserService sysUserService;
@@ -62,8 +62,8 @@ public class TipPostServiceImpl extends ServiceImpl<TipPostMapper, TipPost> impl
         tipMapper.insert(tip);
 
         String email = sysUserService.getEmailById(tipPost.getPostManId());
-        // 发送邮件告知用户
-        emailService.sendPostResultEmail(email, "pass", tipPost.getContent());
+        // 异步发送邮件告知用户（通过 RabbitMQ）
+        messageProducer.sendApproveEmail(email, tipPost.getContent(), true, null);
 
         tipPost.setIsAccepted(1);   // 设置为1表示通过
         tipPostMapper.updateById(tipPost);
@@ -74,7 +74,8 @@ public class TipPostServiceImpl extends ServiceImpl<TipPostMapper, TipPost> impl
         TipPost tipPost = tipPostMapper.selectById(id);
         String email = sysUserService.getEmailById(tipPost.getPostManId());
 
-        emailService.sendPostResultEmail(email, "refuse", tipPost.getContent());
+        // 异步发送邮件告知用户（通过 RabbitMQ）
+        messageProducer.sendApproveEmail(email, tipPost.getContent(), false, null);
 
         tipPost.setIsAccepted(2);   // 设置为2表示拒绝
         tipPostMapper.updateById(tipPost);

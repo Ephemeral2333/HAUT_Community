@@ -86,9 +86,22 @@ public class PostController {
 
     @ApiOperation("获取帖子详情")
     @GetMapping("/front/post/{id}")
-    public Result<Post> getTopic(@PathVariable Long id) {
-        postService.increaseViewCount(id);  // 增加浏览量
+    public Result<?> getTopic(@PathVariable Long id, HttpServletRequest request) {
         Post post = postService.selectByPk(id);
+        if (post == null) {
+            return Result.fail("帖子不存在");
+        }
+
+        Integer status = post.getStatus();
+        if (status != null && (status == 2 || status == 3)) {
+            String currentUserId = JwtHelper.getUserId(request.getHeader("Authorization"));
+            boolean isAuthor = currentUserId != null && currentUserId.equals(String.valueOf(post.getUserId()));
+            if (!isAuthor) {
+                return Result.fail(status == 3 ? "该帖子因违规已被拦截" : "该帖子正在审核中");
+            }
+        }
+
+        postService.increaseViewCount(id);
         return Result.ok(post);
     }
 

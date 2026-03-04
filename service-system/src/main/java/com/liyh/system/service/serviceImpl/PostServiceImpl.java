@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
@@ -85,6 +87,24 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             List<Tag> tags = tagService.insertTags(postVo.getTags());
             tagService.createTopicTag(post.getId(), tags);
         }
+
+        // 事务提交后再发 MQ 消息，避免消费者查不到未提交的数据
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    messageProducer.sendAuditMessage(post.getId());
+                } catch (Exception e) {
+                    log.warn("发送审核消息失败，帖子直接放行: {}", e.getMessage());
+                }
+                try {
+                    messageProducer.sendEsIndexMessage(post.getId(), "index");
+                } catch (Exception e) {
+                    log.warn("发送 ES 索引消息失败: {}", e.getMessage());
+                }
+            }
+        });
+
         return post;
     }
 
@@ -116,6 +136,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             List<Tag> tags = tagService.insertTags(postVo.getTags());
             tagService.createTopicTag(post.getId(), tags);
         }
+
+        // 更新 ES 索引
+        try {
+            messageProducer.sendEsIndexMessage(post.getId(), "index");
+        } catch (Exception e) {
+            log.warn("发送 ES 索引更新消息失败: {}", e.getMessage());
+        }
+
         return post;
     }
 
@@ -147,6 +175,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         redisUtil.delete(RedisConstant.POST_LIKE_COUNT + id);
         redisUtil.delete(RedisConstant.POST_COLLECT_COUNT + id);
         redisUtil.delete(RedisConstant.POST_VIEW_COUNT + id);
+
+        // 从 ES 删除
+        try {
+            messageProducer.sendEsIndexMessage(id, "delete");
+        } catch (Exception e) {
+            log.warn("发送 ES 索引删除消息失败: {}", e.getMessage());
+        }
     }
 
     @Override

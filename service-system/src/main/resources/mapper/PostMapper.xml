@@ -15,7 +15,7 @@
     </resultMap>
 
     <sql id="columns">
-        id,title,content,user_id,view,top,essence,forward,anonymous,create_time,update_time,is_deleted
+        id,title,content,user_id,view,top,essence,forward,anonymous,status,create_time,update_time,is_deleted
     </sql>
     <insert id="favor">
         insert into favorite (user_id, favor_id, type)

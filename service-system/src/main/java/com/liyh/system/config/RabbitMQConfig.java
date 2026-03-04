@@ -72,12 +72,34 @@ public class RabbitMQConfig {
      */
     public static final String BROADCAST_ANNOUNCEMENT_QUEUE = "broadcast.announcement.queue";
 
+    /**
+     * AI 内容审核交换机
+     */
+    public static final String AUDIT_EXCHANGE = "audit.exchange";
+
+    /**
+     * AI 内容审核队列
+     */
+    public static final String AUDIT_QUEUE = "audit.content.queue";
+
+    /**
+     * ES 索引同步交换机
+     */
+    public static final String ES_INDEX_EXCHANGE = "es.index.exchange";
+
+    /**
+     * ES 索引同步队列
+     */
+    public static final String ES_INDEX_QUEUE = "es.index.queue";
+
     // ==================== 路由键 ====================
     public static final String EMAIL_ROUTING_KEY = "email.send";
     public static final String LIKE_ROUTING_KEY = "notify.like";
     public static final String COMMENT_ROUTING_KEY = "notify.comment";
     public static final String FOLLOW_ROUTING_KEY = "notify.follow";
     public static final String DELAY_ROUTING_KEY = "delay.post.publish";
+    public static final String AUDIT_ROUTING_KEY = "audit.content";
+    public static final String ES_INDEX_ROUTING_KEY = "es.index.post";
 
     // ==================== 消息转换器 ====================
     /**
@@ -268,5 +290,39 @@ public class RabbitMQConfig {
     public Binding broadcastAnnouncementBinding(Queue broadcastAnnouncementQueue, FanoutExchange broadcastExchange) {
         return BindingBuilder.bind(broadcastAnnouncementQueue)
                 .to(broadcastExchange);
+    }
+
+    // ==================== AI 内容审核交换机和队列 ====================
+
+    @Bean
+    public DirectExchange auditExchange() {
+        return ExchangeBuilder.directExchange(AUDIT_EXCHANGE).durable(true).build();
+    }
+
+    @Bean
+    public Queue auditQueue() {
+        return QueueBuilder.durable(AUDIT_QUEUE).build();
+    }
+
+    @Bean
+    public Binding auditBinding(Queue auditQueue, DirectExchange auditExchange) {
+        return BindingBuilder.bind(auditQueue).to(auditExchange).with(AUDIT_ROUTING_KEY);
+    }
+
+    // ==================== ES 索引同步交换机和队列 ====================
+
+    @Bean
+    public DirectExchange esIndexExchange() {
+        return ExchangeBuilder.directExchange(ES_INDEX_EXCHANGE).durable(true).build();
+    }
+
+    @Bean
+    public Queue esIndexQueue() {
+        return QueueBuilder.durable(ES_INDEX_QUEUE).build();
+    }
+
+    @Bean
+    public Binding esIndexBinding(Queue esIndexQueue, DirectExchange esIndexExchange) {
+        return BindingBuilder.bind(esIndexQueue).to(esIndexExchange).with(ES_INDEX_ROUTING_KEY);
     }
 }

@@ -59,7 +59,7 @@ public class Post extends BaseEntity implements Serializable {
     private Long forward;
 
     /**
-     * 帖子状态：0=待发布（定时发布），1=已发布
+     * 帖子状态：0=待发布（定时发布），1=已发布，2=待人工复审（AI审核疑似违规），3=已拦截（AI审核违规）
      */
     @TableField("status")
     private Integer status;

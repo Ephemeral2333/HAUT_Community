@@ -309,6 +309,42 @@ public class MessageProducer {
         );
     }
 
+    // ==================== AI 内容审核消息 ====================
+
+    /**
+     * 发送内容审核消息（帖子发布后异步审核）
+     *
+     * @param postId 帖子 ID
+     */
+    public void sendAuditMessage(Long postId) {
+        log.info("发送内容审核消息 - postId: {}", postId);
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.AUDIT_EXCHANGE,
+                RabbitMQConfig.AUDIT_ROUTING_KEY,
+                postId
+        );
+    }
+
+    // ==================== ES 索引同步消息 ====================
+
+    /**
+     * 发送 ES 索引同步消息（帖子发布/更新后同步到 ES）
+     *
+     * @param postId 帖子 ID
+     * @param action 操作类型: index / delete
+     */
+    public void sendEsIndexMessage(Long postId, String action) {
+        java.util.Map<String, Object> msg = new java.util.HashMap<>();
+        msg.put("postId", postId);
+        msg.put("action", action);
+        log.info("发送 ES 索引同步消息 - postId: {}, action: {}", postId, action);
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.ES_INDEX_EXCHANGE,
+                RabbitMQConfig.ES_INDEX_ROUTING_KEY,
+                msg
+        );
+    }
+
     /**
      * 广播活动通知
      */

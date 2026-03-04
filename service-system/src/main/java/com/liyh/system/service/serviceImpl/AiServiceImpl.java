@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -157,6 +158,76 @@ public class AiServiceImpl implements AiService {
                 throw new IOException("API 调用失败 [" + response.code() + "]: " + errorBody);
             }
             return response.body() != null ? response.body().string() : "";
+        }
+    }
+
+    // ==================== Query 改写 ====================
+
+    @Override
+    public List<String> rewriteQuery(String question) {
+        if (!isAvailable())
+            return Collections.emptyList();
+
+        String systemPrompt = """
+                你是搜索查询优化专家。给定用户问题，生成2个语义相关但表达方式不同的搜索查询，以提高检索召回率。
+                严格只返回JSON字符串数组，不要包含任何其他文字或代码块标记。
+                格式示例：["查询1", "查询2"]
+                """;
+
+        String response = chat(systemPrompt, question);
+        if (response == null || response.isBlank())
+            return Collections.emptyList();
+
+        try {
+            String json = response.trim()
+                    .replaceAll("```json\\s*", "")
+                    .replaceAll("```\\s*", "").trim();
+            List<String> result = JSON.parseArray(json, String.class);
+            log.info("Query 改写结果: {}", result);
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("Query 改写解析失败: {}, 原始响应: {}", e.getMessage(), response);
+            return Collections.emptyList();
+        }
+    }
+
+    // ==================== Reranker ====================
+
+    @Override
+    public List<Integer> rerankIndices(String query, List<String> documents) {
+        if (!isAvailable() || documents == null || documents.isEmpty())
+            return null;
+
+        // 截断每个文档以控制 Prompt 长度
+        StringBuilder docsBuilder = new StringBuilder();
+        for (int i = 0; i < documents.size(); i++) {
+            String text = documents.get(i);
+            if (text != null && text.length() > 200)
+                text = text.substring(0, 200) + "...";
+            docsBuilder.append(i).append(". ").append(text).append("\n");
+        }
+
+        String systemPrompt = """
+                你是信息检索专家。给定用户问题和候选文档列表，请按文档与问题相关性从高到低排列文档索引（0-based）。
+                严格只返回JSON整数数组，不要包含任何其他文字或代码块标记。
+                格式示例：[2, 0, 1] 表示第2篇最相关，第0篇次之，第1篇最不相关。
+                """;
+        String userMsg = "问题：" + query + "\n\n候选文档：\n" + docsBuilder;
+
+        String response = chat(systemPrompt, userMsg);
+        if (response == null || response.isBlank())
+            return null;
+
+        try {
+            String json = response.trim()
+                    .replaceAll("```json\\s*", "")
+                    .replaceAll("```\\s*", "").trim();
+            List<Integer> indices = JSON.parseArray(json, Integer.class);
+            log.info("Reranker 排序结果: {}", indices);
+            return indices;
+        } catch (Exception e) {
+            log.warn("Reranker 解析失败: {}, 原始响应: {}", e.getMessage(), response);
+            return null;
         }
     }
 }

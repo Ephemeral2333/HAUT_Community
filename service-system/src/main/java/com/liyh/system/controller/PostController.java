@@ -14,6 +14,7 @@ import com.liyh.model.vo.PostVo;
 import com.liyh.model.vo.UserVo;
 import com.liyh.system.annotation.RedisLock;
 import com.liyh.system.service.FollowService;
+import com.liyh.system.service.FileService;
 import com.liyh.system.service.PostService;
 import com.liyh.system.service.SysUserService;
 import com.liyh.system.service.TagService;
@@ -48,6 +49,9 @@ public class PostController {
     @Autowired
     private SysUserService sysUserService;
 
+    @Autowired
+    private FileService fileService;
+
     @ApiOperation("分页查询帖子")
     @PostMapping("/front/post/list/{tab}")
     public Result getPageList(@RequestBody Pagination pagination, @PathVariable String tab) {
@@ -68,8 +72,7 @@ public class PostController {
 
     @ApiOperation("发布帖子")
     @PostMapping("/front/post/save")
-    @RedisLock(prefix = "lock:post:save:", key = "#request.getHeader('Authorization')", 
-               expireTime = 5, message = "发帖太频繁，请5秒后再试")
+    @RedisLock(prefix = "lock:post:save:", key = "#request.getHeader('Authorization')", expireTime = 5, message = "发帖太频繁，请5秒后再试")
     public Result save(@RequestBody PostVo postVo, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         Post post = postService.savePost(postVo, userId);
@@ -153,8 +156,8 @@ public class PostController {
     @ApiOperation("获取某标签下的帖子")
     @PostMapping("/front/tag/getPageList/{id}")
     public Result getPostByLabelId(@PathVariable Long id,
-                                   @RequestParam Integer page,
-                                   @RequestParam Integer size) {
+            @RequestParam Integer page,
+            @RequestParam Integer size) {
         Page<Post> postPage = new Page<>(page, size);
         IPage<Post> iPage = postService.selectPageByTagId(postPage, id);
 
@@ -170,10 +173,14 @@ public class PostController {
     @ApiOperation("获取用户主页的帖子")
     @GetMapping("/front/user/info/{username}")
     public Result getPostByUserId(@PathVariable String username,
-                                  @RequestParam Integer page,
-                                  @RequestParam Integer size) {
+            @RequestParam Integer page,
+            @RequestParam Integer size) {
         SysUser sysUser = sysUserService.getByUsername(username);
         UserVo userVo = sysUserService.getUserInfo(sysUser.getId());
+        // 将 headUrl Key 拼接为完整 URL
+        if (userVo != null) {
+            userVo.setHeadUrl(fileService.getFullUrl(userVo.getHeadUrl()));
+        }
         Page<Post> postPage = new Page<>(page, size);
         IPage<Post> iPage = postService.selectPageByUserId(postPage, String.valueOf(sysUser.getId()));
 
@@ -241,7 +248,7 @@ public class PostController {
     @ApiOperation("获取收藏帖子")
     @PostMapping("/post/my/{tab}")
     public Result getMyCollects(@RequestBody Pagination pagination, HttpServletRequest request,
-                                @PathVariable String tab) {
+            @PathVariable String tab) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         Page<Post> page = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
         IPage<Post> iPage;
@@ -291,11 +298,10 @@ public class PostController {
 
     @ApiOperation("定时发布帖子")
     @PostMapping("/front/post/schedule")
-    @RedisLock(prefix = "lock:post:schedule:", key = "#request.getHeader('Authorization')",
-               expireTime = 5, message = "操作太频繁，请5秒后再试")
+    @RedisLock(prefix = "lock:post:schedule:", key = "#request.getHeader('Authorization')", expireTime = 5, message = "操作太频繁，请5秒后再试")
     public Result schedulePost(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
-        
+
         // 解析帖子信息
         String title = (String) params.get("title");
         String content = (String) params.get("content");
@@ -303,7 +309,7 @@ public class PostController {
         @SuppressWarnings("unchecked")
         List<String> tags = (List<String>) params.get("tags");
         String publishTimeStr = (String) params.get("publishTime");
-        
+
         // 参数校验
         if (title == null || title.trim().isEmpty()) {
             return Result.fail("标题不能为空");
@@ -314,7 +320,7 @@ public class PostController {
         if (publishTimeStr == null || publishTimeStr.trim().isEmpty()) {
             return Result.fail("发布时间不能为空");
         }
-        
+
         // 解析发布时间
         Date publishTime;
         try {
@@ -323,33 +329,33 @@ public class PostController {
         } catch (Exception e) {
             return Result.fail("发布时间格式错误，请使用 yyyy-MM-dd HH:mm:ss 格式");
         }
-        
+
         // 校验发布时间必须在当前时间之后
         if (publishTime.before(new Date())) {
             return Result.fail("发布时间必须在当前时间之后");
         }
-        
+
         // 最大延迟时间限制（49天）
         long maxDelay = 49L * 24 * 60 * 60 * 1000;
         if (publishTime.getTime() - System.currentTimeMillis() > maxDelay) {
             return Result.fail("发布时间不能超过49天");
         }
-        
+
         // 构建PostVo
         PostVo postVo = new PostVo();
         postVo.setTitle(title);
         postVo.setContent(content);
         postVo.setAnonymous(anonymous);
         postVo.setTags(tags);
-        
+
         // 保存定时发布帖子
         Long postId = postService.saveScheduledPost(postVo, userId, publishTime);
-        
+
         Map<String, Object> result = new HashMap<>();
         result.put("postId", postId);
         result.put("publishTime", publishTimeStr);
         result.put("message", "帖子已加入定时发布队列");
-        
+
         log.info("用户{}创建定时发布帖子，帖子ID: {}, 计划发布时间: {}", userId, postId, publishTimeStr);
         return Result.ok(result);
     }

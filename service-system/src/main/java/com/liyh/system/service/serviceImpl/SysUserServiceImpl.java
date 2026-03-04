@@ -38,6 +38,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Autowired
     private PostMapper postMapper;
 
+    @Autowired
+    private com.liyh.system.service.FileService fileService;
+
     @Value("${app.default-password:123456}")
     private String defaultPassword;
 
@@ -170,7 +173,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
 
         return new UserInfoCountVo(Long.valueOf(userId), username,
-                articleCount, likeCount, collectCount, viewCount, avatar);
+                articleCount, likeCount, collectCount, viewCount,
+                fileService.getFullUrl(avatar));
     }
 
     /**
@@ -180,10 +184,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public List<Long> getAllActiveUserIds() {
         QueryWrapper<SysUser> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("status", 1)  // 状态正常的用户
-                .eq("is_deleted", 0)  // 未删除的用户
-                .select("id");        // 只查询ID字段
-        
+        queryWrapper.eq("status", 1) // 状态正常的用户
+                .eq("is_deleted", 0) // 未删除的用户
+                .select("id"); // 只查询ID字段
+
         return sysUserMapper.selectList(queryWrapper)
                 .stream()
                 .map(SysUser::getId)

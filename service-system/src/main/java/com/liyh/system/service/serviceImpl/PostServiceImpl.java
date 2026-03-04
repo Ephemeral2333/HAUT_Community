@@ -12,6 +12,7 @@ import com.liyh.model.vo.PostVo;
 import com.liyh.system.mapper.CollectMapper;
 import com.liyh.system.mapper.PostMapper;
 import com.liyh.system.service.CommentService;
+import com.liyh.system.service.FileService;
 import com.liyh.system.service.PostService;
 import com.liyh.system.service.SysUserService;
 import com.liyh.system.service.TagService;
@@ -40,7 +41,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
-    
+
     @Autowired
     private PostMapper postMapper;
 
@@ -62,14 +63,36 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Autowired
     private SysUserService sysUserService;
 
+    @Autowired
+    private FileService fileService;
+
+    /**
+     * 将帖子作者的 headUrl Key 拼接为完整 URL
+     */
+    private void spliceAuthorAvatar(Post post) {
+        if (post != null && post.getAuthor() != null) {
+            post.getAuthor().setHeadUrl(fileService.getFullUrl(post.getAuthor().getHeadUrl()));
+        }
+    }
+
+    private void spliceAuthorAvatarPage(IPage<Post> page) {
+        if (page != null) {
+            page.getRecords().forEach(this::spliceAuthorAvatar);
+        }
+    }
+
     @Override
     public IPage<Post> selectPageByHot(Page<Post> tip) {
-        return postMapper.selectPageByHot(tip);
+        IPage<Post> result = postMapper.selectPageByHot(tip);
+        spliceAuthorAvatarPage(result);
+        return result;
     }
 
     @Override
     public IPage<Post> selectPageByTime(Page<Post> tip) {
-        return postMapper.selectPageByTime(tip);
+        IPage<Post> result = postMapper.selectPageByTime(tip);
+        spliceAuthorAvatarPage(result);
+        return result;
     }
 
     @Override
@@ -110,12 +133,16 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public Post selectByPk(Long id) {
-        return postMapper.selectByPk(id);
+        Post post = postMapper.selectByPk(id);
+        spliceAuthorAvatar(post);
+        return post;
     }
 
     @Override
     public IPage<Post> selectPageByUserId(Page<Post> page, String userId) {
-        return postMapper.selectPageByUserId(page, userId);
+        IPage<Post> result = postMapper.selectPageByUserId(page, userId);
+        spliceAuthorAvatarPage(result);
+        return result;
     }
 
     @Override
@@ -149,17 +176,23 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public IPage<Post> selectAllPage(Page<Post> page) {
-        return postMapper.selectAllPage(page);
+        IPage<Post> result = postMapper.selectAllPage(page);
+        spliceAuthorAvatarPage(result);
+        return result;
     }
 
     @Override
     public IPage<Post> selectPageByTagId(Page<Post> postPage, Long id) {
-        return postMapper.selectPageByTagId(postPage, id);
+        IPage<Post> result = postMapper.selectPageByTagId(postPage, id);
+        spliceAuthorAvatarPage(result);
+        return result;
     }
 
     @Override
     public IPage<Post> searchByKeyword(Page<Post> page, String keyWord) {
-        return postMapper.searchByKeyword(page, keyWord);
+        IPage<Post> result = postMapper.searchByKeyword(page, keyWord);
+        spliceAuthorAvatarPage(result);
+        return result;
     }
 
     @Override
@@ -170,7 +203,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         tagService.deleteTopicTagByTopicId(id);
         // 删除帖子的所有评论
         commentService.deleteCommentByPostId(id);
-        
+
         // 清除Redis缓存
         redisUtil.delete(RedisConstant.POST_LIKE_COUNT + id);
         redisUtil.delete(RedisConstant.POST_COLLECT_COUNT + id);
@@ -212,9 +245,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
 
         // 2. Redis 操作
-        redisUtil.setAdd(userLikedKey, postId);          // 添加到用户点赞集合
-        redisUtil.increment(postLikeCountKey);           // 点赞数 +1
-        updatePostHotScore(postId, RedisConstant.LIKE_SCORE);  // 更新热度
+        redisUtil.setAdd(userLikedKey, postId); // 添加到用户点赞集合
+        redisUtil.increment(postLikeCountKey); // 点赞数 +1
+        updatePostHotScore(postId, RedisConstant.LIKE_SCORE); // 更新热度
 
         // 3. 数据库操作（保证持久化）
         postMapper.favor(userId, postId);
@@ -230,8 +263,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                             fromUser.getUsername(),
                             post.getUserId(),
                             postId,
-                            post.getTitle()
-                    );
+                            post.getTitle());
                 }
             }
         } catch (Exception e) {
@@ -257,8 +289,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
 
         // 2. Redis 操作
-        redisUtil.setRemove(userLikedKey, postId);       // 从集合移除
-        redisUtil.decrement(postLikeCountKey);           // 点赞数 -1
+        redisUtil.setRemove(userLikedKey, postId); // 从集合移除
+        redisUtil.decrement(postLikeCountKey); // 点赞数 -1
         updatePostHotScore(postId, -RedisConstant.LIKE_SCORE);
 
         // 3. 数据库操作
@@ -274,12 +306,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public boolean isFavor(String userId, Long postId) {
         String key = RedisConstant.USER_LIKED_POSTS + userId;
         Boolean isMember = redisUtil.setIsMember(key, postId);
-        
+
         // 缓存未命中，从数据库查询
         if (isMember == null) {
             boolean dbResult = postMapper.isFavor(userId, postId) > 0;
             if (dbResult) {
-                redisUtil.setAdd(key, postId);  // 写入缓存
+                redisUtil.setAdd(key, postId); // 写入缓存
             }
             return dbResult;
         }
@@ -292,7 +324,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public Long getPostLikeCount(Long postId) {
         String key = RedisConstant.POST_LIKE_COUNT + postId;
         Long count = redisUtil.getLong(key);
-        
+
         // 缓存未命中，从数据库查询
         if (count == null) {
             int dbCount = postMapper.getFavoriteCountByPostId(postId);
@@ -344,7 +376,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public boolean isCollect(String userId, Long postId) {
         String key = RedisConstant.USER_COLLECTED_POSTS + userId;
         Boolean isMember = redisUtil.setIsMember(key, postId);
-        
+
         // 缓存未命中，从数据库查询
         if (isMember == null) {
             boolean dbResult = postMapper.isCollect(userId, postId) > 0;
@@ -362,7 +394,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public Long getPostCollectCount(Long postId) {
         String key = RedisConstant.POST_COLLECT_COUNT + postId;
         Long count = redisUtil.getLong(key);
-        
+
         if (count == null) {
             int dbCount = postMapper.getCollectsCountByPostId(postId);
             redisUtil.set(key, dbCount, RedisConstant.COUNT_EXPIRE, TimeUnit.SECONDS);
@@ -394,7 +426,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public Long getPostViewCount(Long postId) {
         String key = RedisConstant.POST_VIEW_COUNT + postId;
         Long count = redisUtil.getLong(key);
-        
+
         if (count == null) {
             Post post = postMapper.selectById(postId);
             int dbCount = post != null ? post.getView() : 0;
@@ -451,12 +483,16 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public IPage<Post> selectPageByCollectUserId(Page<Post> page, String userId) {
-        return postMapper.selectPageByCollectUserId(page, userId);
+        IPage<Post> result = postMapper.selectPageByCollectUserId(page, userId);
+        spliceAuthorAvatarPage(result);
+        return result;
     }
 
     @Override
     public IPage<Post> selectPageByLikeUserId(Page<Post> page, String userId) {
-        return postMapper.selectPageByLikeUserId(page, userId);
+        IPage<Post> result = postMapper.selectPageByLikeUserId(page, userId);
+        spliceAuthorAvatarPage(result);
+        return result;
     }
 
     @Override
@@ -510,26 +546,26 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             log.warn("定时发布失败：帖子不存在, postId={}", postId);
             return;
         }
-        
+
         if (post.getIsDeleted() == 1) {
             log.info("定时发布跳过：帖子已删除, postId={}", postId);
             return;
         }
-        
+
         // 检查是否已发布（防止重复处理）
         if (post.getStatus() != null && post.getStatus() == 1) {
             log.info("定时发布跳过：帖子已发布, postId={}", postId);
             return;
         }
-        
+
         // 更新帖子状态为已发布，更新时间为当前时间（让帖子出现在最新列表）
-        post.setStatus(1);  // 已发布
+        post.setStatus(1); // 已发布
         post.setUpdateTime(new java.util.Date());
         postMapper.updateById(post);
-        
+
         // 更新热度排行榜
         updatePostHotScore(postId, RedisConstant.VIEW_SCORE);
-        
+
         log.info("定时发布成功: postId={}, title={}", postId, post.getTitle());
     }
 
@@ -546,10 +582,10 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                 .content(EmojiParser.parseToAliases(postVo.getContent()))
                 .userId(Long.valueOf(userId))
                 .anonymous(postVo.isAnonymous())
-                .status(0)  // 待发布状态
+                .status(0) // 待发布状态
                 .build();
         postMapper.insert(post);
-        
+
         // 处理标签
         List<Long> tagIds = new ArrayList<>();
         if (!ObjectUtils.isEmpty(postVo.getTags())) {
@@ -557,7 +593,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             tagService.createTopicTag(post.getId(), tags);
             tagIds = tags.stream().map(Tag::getId).collect(Collectors.toList());
         }
-        
+
         // 发送延迟消息
         messageProducer.sendDelayedPostPublish(
                 post.getId(),
@@ -566,9 +602,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                 post.getContent(),
                 tagIds,
                 postVo.isAnonymous(),
-                publishTime
-        );
-        
+                publishTime);
+
         log.info("定时发布帖子已保存: postId={}, publishTime={}", post.getId(), publishTime);
         return post.getId();
     }

@@ -8,8 +8,10 @@ import com.liyh.model.entity.Notification;
 import com.liyh.model.vo.NotificationVo;
 import com.liyh.model.vo.message.NotifyMessage;
 import com.liyh.system.mapper.NotificationMapper;
+import com.liyh.system.service.FileService;
 import com.liyh.system.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -27,6 +29,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Notification>
         implements NotificationService {
+
+    @Autowired
+    private FileService fileService;
 
     @Override
     public void saveFromMQ(NotifyMessage message) {
@@ -54,7 +59,8 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
      * 转换通知类型枚举为数据库整数
      */
     private Integer convertType(NotifyMessage.NotifyType type) {
-        if (type == null) return 6; // 默认系统通知
+        if (type == null)
+            return 6; // 默认系统通知
         return switch (type) {
             case LIKE_POST -> 1;
             case LIKE_COMMENT -> 2;
@@ -74,7 +80,10 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
                     .map(Integer::parseInt)
                     .collect(Collectors.toList());
         }
-        return baseMapper.selectPageByUserId(page, userId, typeList);
+        IPage<NotificationVo> result = baseMapper.selectPageByUserId(page, userId, typeList);
+        // 将通知中的 fromUserAvatar Key 拼接为完整 URL
+        result.getRecords().forEach(vo -> vo.setFromUserAvatar(fileService.getFullUrl(vo.getFromUserAvatar())));
+        return result;
     }
 
     @Override
@@ -86,8 +95,10 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     public Map<String, Integer> getUnreadCountByType(Long userId) {
         Map<String, Integer> countMap = new HashMap<>();
         countMap.put("total", baseMapper.selectUnreadCount(userId));
-        countMap.put("like", baseMapper.selectUnreadCountByType(userId, 1) + baseMapper.selectUnreadCountByType(userId, 2));
-        countMap.put("comment", baseMapper.selectUnreadCountByType(userId, 3) + baseMapper.selectUnreadCountByType(userId, 4));
+        countMap.put("like",
+                baseMapper.selectUnreadCountByType(userId, 1) + baseMapper.selectUnreadCountByType(userId, 2));
+        countMap.put("comment",
+                baseMapper.selectUnreadCountByType(userId, 3) + baseMapper.selectUnreadCountByType(userId, 4));
         countMap.put("follow", baseMapper.selectUnreadCountByType(userId, 5));
         countMap.put("system", baseMapper.selectUnreadCountByType(userId, 6));
         return countMap;

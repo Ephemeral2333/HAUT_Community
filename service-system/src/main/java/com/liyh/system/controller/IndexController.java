@@ -43,6 +43,9 @@ public class IndexController {
     private SysUserService sysUserService;
 
     @Autowired
+    private com.liyh.system.service.FileService fileService;
+
+    @Autowired
     private MessageProducer messageProducer;
 
     @Autowired
@@ -56,8 +59,7 @@ public class IndexController {
      * @Param
      **/
     @PostMapping("/login")
-    @RateLimit(prefix = "limit:login:", key = "#loginVo.username", limit = 5, period = 60,
-               message = "登录失败次数过多，请1分钟后再试")
+    @RateLimit(prefix = "limit:login:", key = "#loginVo.username", limit = 5, period = 60, message = "登录失败次数过多，请1分钟后再试")
     public Result login(@RequestBody LoginVo loginVo) {
         // 根据用户名查询数据库
         SysUser sysUser = sysUserService.getByUsername(loginVo.getUsername());
@@ -79,8 +81,7 @@ public class IndexController {
 
     @ApiOperation(value = "注册")
     @PostMapping("/register")
-    @RateLimit(prefix = "limit:register:", limitType = RateLimit.LimitType.IP, limit = 3, period = 60,
-               message = "注册太频繁，请1分钟后再试")
+    @RateLimit(prefix = "limit:register:", limitType = RateLimit.LimitType.IP, limit = 3, period = 60, message = "注册太频繁，请1分钟后再试")
     public Result register(@RequestBody RegisterVo registerVo) throws Exception {
         if (sysUserService.getByUsername(registerVo.getUsername()) != null) {
             return Result.alreadyUserName();
@@ -95,8 +96,7 @@ public class IndexController {
 
     @ApiOperation(value = "发送邮箱验证码")
     @GetMapping("sendCode")
-    @RateLimit(prefix = "limit:email:", key = "#email", limit = 1, period = 60,
-               message = "验证码发送太频繁，请60秒后再试")
+    @RateLimit(prefix = "limit:email:", key = "#email", limit = 1, period = 60, message = "验证码发送太频繁，请60秒后再试")
     public Result sendCode(@RequestParam String email) {
         if (sysUserService.getByEmail(email) != null) {
             return Result.ok("该邮箱已被注册");
@@ -114,7 +114,14 @@ public class IndexController {
     @GetMapping("/info")
     public Result<UserVo> info(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
+        if (userId == null || userId.isEmpty()) {
+            return Result.build(null, ResultCodeEnum.LOGIN_AUTH);
+        }
         UserVo sysUser = sysUserService.getUserInfo(Long.parseLong(userId));
+        // 将 DB 中存储的相对 Key 拼接为完整 URL 后返回给前端
+        if (sysUser != null) {
+            sysUser.setHeadUrl(fileService.getFullUrl(sysUser.getHeadUrl()));
+        }
         return Result.ok(sysUser);
     }
 
@@ -131,6 +138,16 @@ public class IndexController {
     public Result saveAvatar(@RequestBody JsonNode jsonNode, @PathVariable("id") Long id) {
         String url = jsonNode.get("url").asText();
         url = URLDecoder.decode(url);
+        // 如果前端传来的是完整 URL（如不同环境下的历史数据），截取成相对 Key 再存到 DB
+        // 正常情况下 upload 接口已返回 Key，此处兴起兼容作用
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            // 截取域名后的部分作为 Key
+            int schemeEnd = url.indexOf("://");
+            int slashAfterHost = url.indexOf('/', schemeEnd + 3);
+            if (slashAfterHost != -1) {
+                url = url.substring(slashAfterHost + 1);
+            }
+        }
         sysUserService.saveAvatar(url, id);
         return Result.ok();
     }
@@ -138,7 +155,7 @@ public class IndexController {
     @ApiOperation("修改密码")
     @PostMapping("/modify/password")
     public Result modifyPass(@RequestParam("pass") String pass,
-                             HttpServletRequest request) {
+            HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         sysUserService.modifyPass(pass, userId);
         return Result.ok();

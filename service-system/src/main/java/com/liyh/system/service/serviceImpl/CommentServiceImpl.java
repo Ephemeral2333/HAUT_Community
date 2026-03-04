@@ -12,6 +12,7 @@ import com.liyh.system.mapper.PostMapper;
 import com.liyh.system.mapper.SysUserMapper;
 import com.liyh.system.mq.producer.MessageProducer;
 import com.liyh.system.service.CommentService;
+import com.liyh.system.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ import java.util.List;
 @Service
 @Slf4j
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> implements CommentService {
-    
+
     @Autowired
     private CommentMapper commentMapper;
 
@@ -42,24 +43,40 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Autowired
     private SysUserMapper sysUserMapper;
 
+    @Autowired
+    private FileService fileService;
+
     /**
      * 获取某话题评论列表
      */
     @Override
     public List<Comment> getTopicCommentListByTopicId(Long topicId, Long userId) {
         List<Comment> commentList = commentMapper.getTopicCommentListByTopicId(topicId);
-        
+
+        // 将所有评论（包括子评论）的 avatar Key 拼接为完整 URL
+        commentList.forEach(this::spliceAvatarUrl);
+
         if (userId == null) {
             return commentList;
         }
-        
+
         // 从 Redis 判断当前用户是否点赞了每条评论
         commentList.forEach(comment -> {
             comment.setFavorite(isCommentLiked(userId, comment.getId()));
             traverseAllChildren(comment, userId);
         });
-        
+
         return commentList;
+    }
+
+    /**
+     * 递归将评论及子评论的 avatar Key 拼接为完整 URL
+     */
+    private void spliceAvatarUrl(Comment comment) {
+        comment.setAvatar(fileService.getFullUrl(comment.getAvatar()));
+        if (comment.getChildren() != null) {
+            comment.getChildren().forEach(this::spliceAvatarUrl);
+        }
     }
 
     /**
@@ -74,11 +91,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 .parentId(0L)
                 .build();
         commentMapper.insert(comment);
-        
+
         // 更新帖子评论数（Redis）
         String key = RedisConstant.POST_COMMENT_COUNT + commentPostVo.getTopicId();
         redisUtil.increment(key);
-        
+
         // 发送评论通知
         try {
             Post post = postMapper.selectById(commentPostVo.getTopicId());
@@ -91,14 +108,13 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                             post.getUserId(),
                             post.getId(),
                             post.getTitle(),
-                            commentPostVo.getContent()
-                    );
+                            commentPostVo.getContent());
                 }
             }
         } catch (Exception e) {
             log.warn("发送评论通知失败: {}", e.getMessage());
         }
-        
+
         log.info("用户{}发布评论，帖子ID: {}", userId, commentPostVo.getTopicId());
     }
 
@@ -133,7 +149,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     private boolean isCommentLiked(Long userId, Long commentId) {
         String key = RedisConstant.USER_LIKED_COMMENTS + userId;
         Boolean isMember = redisUtil.setIsMember(key, commentId);
-        
+
         // 缓存未命中，从数据库查询
         if (isMember == null) {
             int dbResult = commentMapper.isFavor(commentId, userId);
@@ -151,7 +167,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     public Long getCommentLikeCount(Long commentId) {
         String key = RedisConstant.COMMENT_LIKE_COUNT + commentId;
         Long count = redisUtil.getLong(key);
-        
+
         if (count == null) {
             // 从数据库查询并写入缓存
             // TODO: 添加查询评论点赞数的SQL
@@ -172,11 +188,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 .parentId(commentPostVo.getId())
                 .build();
         commentMapper.insert(comment);
-        
+
         // 更新帖子评论数
         String key = RedisConstant.POST_COMMENT_COUNT + commentPostVo.getTopicId();
         redisUtil.increment(key);
-        
+
         // 发送回复通知
         try {
             Comment parentComment = commentMapper.selectById(commentPostVo.getId());
@@ -188,14 +204,13 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                             fromUser.getUsername(),
                             parentComment.getUserId(),
                             parentComment.getId(),
-                            commentPostVo.getContent()
-                    );
+                            commentPostVo.getContent());
                 }
             }
         } catch (Exception e) {
             log.warn("发送回复通知失败: {}", e.getMessage());
         }
-        
+
         log.info("用户{}回复评论{}", userId, commentPostVo.getId());
     }
 
@@ -205,7 +220,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Override
     public void deleteCommentByPostId(Long postId) {
         commentMapper.deleteCommentByPostId(postId);
-        
+
         // 清除 Redis 缓存
         redisUtil.delete(RedisConstant.POST_COMMENT_COUNT + postId);
     }

@@ -9,6 +9,7 @@ import com.liyh.model.vo.FollowerVo;
 import com.liyh.system.mapper.FollowMapper;
 import com.liyh.system.mapper.SysUserMapper;
 import com.liyh.system.mq.producer.MessageProducer;
+import com.liyh.system.service.FileService;
 import com.liyh.system.service.FollowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     @Autowired
     private MessageProducer messageProducer;
 
+    @Autowired
+    private FileService fileService;
 
     @Override
     public void follow(String userId, Long parentId) {
@@ -46,8 +49,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                 messageProducer.sendFollowNotify(
                         Long.parseLong(userId),
                         fromUser.getUsername(),
-                        parentId
-                );
+                        parentId);
             }
         } catch (Exception e) {
             log.warn("发送关注通知失败: {}", e.getMessage());
@@ -67,12 +69,16 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     @Override
     public IPage<FollowerVo> getFollowList(Page<FollowerVo> pageParam, String username) {
         SysUser sysUser = sysUserMapper.selectByUserName(username);
-        return followMapper.getFollowList(pageParam, sysUser.getId());
+        IPage<FollowerVo> result = followMapper.getFollowList(pageParam, sysUser.getId());
+        result.getRecords().forEach(vo -> vo.setAvatar(fileService.getFullUrl(vo.getAvatar())));
+        return result;
     }
 
     @Override
     public IPage<FollowerVo> getFansList(Page<FollowerVo> pageParam, String username) {
         SysUser sysUser = sysUserMapper.selectByUserName(username);
-        return followMapper.getFansList(pageParam, sysUser.getId());
+        IPage<FollowerVo> result = followMapper.getFansList(pageParam, sysUser.getId());
+        result.getRecords().forEach(vo -> vo.setAvatar(fileService.getFullUrl(vo.getAvatar())));
+        return result;
     }
 }

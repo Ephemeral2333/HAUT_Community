@@ -64,13 +64,13 @@ public class FileServiceImpl implements FileService {
                 log.warn("文件名为空");
                 return null;
             }
-            
+
             int dotPos = originalFilename.lastIndexOf(".");
             if (dotPos < 0) {
                 log.warn("文件没有扩展名: {}", originalFilename);
                 return null;
             }
-            
+
             String fileExt = originalFilename.substring(dotPos + 1).toLowerCase();
             // 判断是否是合法的文件后缀
             if (!FileUtil.isFileAllowed(fileExt)) {
@@ -78,14 +78,16 @@ public class FileServiceImpl implements FileService {
                 return null;
             }
 
-            String fileName = UUID.randomUUID().toString().replaceAll("-", "") + "." + fileExt;
-            // 调用put方法上传
-            Response res = uploadManager.put(file.getBytes(), "community/" + fileName, getUpToken());
+            // 生成唯一文件名，存储在 community/ 目录下
+            String key = "community/" + UUID.randomUUID().toString().replaceAll("-", "") + "." + fileExt;
+            // 调用 put 方法上传
+            Response res = uploadManager.put(file.getBytes(), key, getUpToken());
             // 打印返回的信息
             if (res.isOK() && res.isJson()) {
-                String key = (String) JSONObject.parseObject(res.bodyString()).get("key");
-                log.info("文件上传成功: {}", key);
-                return domain + key;
+                String returnedKey = (String) JSONObject.parseObject(res.bodyString()).get("key");
+                log.info("文件上传成功, key: {}", returnedKey);
+                // 只返回相对 Key，不含域名前缀
+                return returnedKey;
             } else {
                 log.error("七牛云上传失败: {}", res.bodyString());
                 return null;
@@ -94,5 +96,17 @@ public class FileServiceImpl implements FileService {
             log.error("七牛云上传异常: {}", e.getMessage(), e);
             return null;
         }
+    }
+
+    @Override
+    public String getFullUrl(String key) {
+        if (key == null || key.isEmpty()) {
+            return null;
+        }
+        // 如果已经是完整 URL（兼容老数据），直接返回
+        if (key.startsWith("http://") || key.startsWith("https://")) {
+            return key;
+        }
+        return domain + key;
     }
 }

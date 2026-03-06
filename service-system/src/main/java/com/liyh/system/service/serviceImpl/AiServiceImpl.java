@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * AI 服务实现 - 调用 OpenAI 兼容协议的 LLM / Embedding API
@@ -31,6 +33,10 @@ public class AiServiceImpl implements AiService {
     private OkHttpClient httpClient;
 
     private static final MediaType JSON_MEDIA = MediaType.parse("application/json; charset=utf-8");
+    private static final int MAX_RETRIES = 2;
+    private static final long RETRY_DELAY_MS = 1000;
+    private static final int RERANK_DOC_MAX_LEN = 400;
+    private static final Pattern JSON_ARRAY_PATTERN = Pattern.compile("\\[\\s*[\\s\\S]*?]");
 
     @PostConstruct
     public void init() {
@@ -81,7 +87,7 @@ public class AiServiceImpl implements AiService {
         log.info("AI Chat 调用开始 - url: {}, model: {}", url, chatConfig.getModel());
         long start = System.currentTimeMillis();
         try {
-            String responseBody = doPost(url, chatConfig.getApiKey(), body.toJSONString());
+            String responseBody = doPostWithRetry(url, chatConfig.getApiKey(), body.toJSONString());
             long elapsed = System.currentTimeMillis() - start;
             log.info("AI Chat 调用成功 - 耗时: {}ms, 响应长度: {}", elapsed, responseBody.length());
             JSONObject json = JSON.parseObject(responseBody);
@@ -124,7 +130,7 @@ public class AiServiceImpl implements AiService {
         String url = embConfig.getBaseUrl() + "/embeddings";
 
         try {
-            String responseBody = doPost(url, apiKey, body.toJSONString());
+            String responseBody = doPostWithRetry(url, apiKey, body.toJSONString());
             JSONObject json = JSON.parseObject(responseBody);
             JSONArray dataArray = json.getJSONArray("data");
 
@@ -142,6 +148,35 @@ public class AiServiceImpl implements AiService {
             log.error("Embedding 调用失败: {}", e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 带重试的 HTTP POST，对 5xx 和网络异常重试最多 MAX_RETRIES 次
+     */
+    private String doPostWithRetry(String url, String apiKey, String jsonBody) throws IOException {
+        IOException lastException = null;
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                return doPost(url, apiKey, jsonBody);
+            } catch (IOException e) {
+                lastException = e;
+                boolean serverError = e.getMessage() != null && e.getMessage().contains("[5");
+                boolean networkError = e.getMessage() != null &&
+                        (e.getMessage().contains("timeout") || e.getMessage().contains("connect"));
+                if (attempt < MAX_RETRIES && (serverError || networkError)) {
+                    log.warn("API 调用失败(第{}次), {}ms 后重试: {}", attempt + 1, RETRY_DELAY_MS, e.getMessage());
+                    try {
+                        Thread.sleep(RETRY_DELAY_MS * (attempt + 1));
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw e;
+                    }
+                } else {
+                    throw e;
+                }
+            }
+        }
+        throw lastException;
     }
 
     private String doPost(String url, String apiKey, String jsonBody) throws IOException {
@@ -179,10 +214,7 @@ public class AiServiceImpl implements AiService {
             return Collections.emptyList();
 
         try {
-            String json = response.trim()
-                    .replaceAll("```json\\s*", "")
-                    .replaceAll("```\\s*", "").trim();
-            List<String> result = JSON.parseArray(json, String.class);
+            List<String> result = JSON.parseArray(extractJsonArray(response), String.class);
             log.info("Query 改写结果: {}", result);
             return result != null ? result : Collections.emptyList();
         } catch (Exception e) {
@@ -198,12 +230,11 @@ public class AiServiceImpl implements AiService {
         if (!isAvailable() || documents == null || documents.isEmpty())
             return null;
 
-        // 截断每个文档以控制 Prompt 长度
         StringBuilder docsBuilder = new StringBuilder();
         for (int i = 0; i < documents.size(); i++) {
             String text = documents.get(i);
-            if (text != null && text.length() > 200)
-                text = text.substring(0, 200) + "...";
+            if (text != null && text.length() > RERANK_DOC_MAX_LEN)
+                text = text.substring(0, RERANK_DOC_MAX_LEN) + "...";
             docsBuilder.append(i).append(". ").append(text).append("\n");
         }
 
@@ -219,15 +250,30 @@ public class AiServiceImpl implements AiService {
             return null;
 
         try {
-            String json = response.trim()
-                    .replaceAll("```json\\s*", "")
-                    .replaceAll("```\\s*", "").trim();
-            List<Integer> indices = JSON.parseArray(json, Integer.class);
+            List<Integer> indices = JSON.parseArray(extractJsonArray(response), Integer.class);
             log.info("Reranker 排序结果: {}", indices);
             return indices;
         } catch (Exception e) {
             log.warn("Reranker 解析失败: {}, 原始响应: {}", e.getMessage(), response);
             return null;
         }
+    }
+
+    /**
+     * 从 LLM 响应中提取 JSON 数组，兼容 markdown 代码块包裹和前后附带文字的情况
+     */
+    private String extractJsonArray(String response) {
+        String cleaned = response.trim()
+                .replaceAll("```json\\s*", "")
+                .replaceAll("```\\s*", "")
+                .trim();
+        if (cleaned.startsWith("[")) {
+            return cleaned;
+        }
+        Matcher matcher = JSON_ARRAY_PATTERN.matcher(cleaned);
+        if (matcher.find()) {
+            return matcher.group();
+        }
+        return cleaned;
     }
 }

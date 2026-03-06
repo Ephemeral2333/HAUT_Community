@@ -33,6 +33,9 @@ import org.elasticsearch.xcontent.XContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -192,6 +195,9 @@ public class EsPostServiceImpl implements EsPostService {
                         .map(chunk -> truncate(chunk, EMBED_TEXT_MAX_LEN))
                         .collect(Collectors.toList());
                 vectors = aiService.embedBatch(textsToEmbed);
+                if (vectors == null || vectors.isEmpty()) {
+                    log.warn("帖子 {} 的 Embedding 生成失败，该帖子将缺少向量字段，无法被向量搜索召回", post.getId());
+                }
             }
 
             // 4. 批量写入 ES（BulkRequest）
@@ -373,6 +379,8 @@ public class EsPostServiceImpl implements EsPostService {
 
     // ==================== 全量重建 ====================
 
+    private static final int REINDEX_BATCH_SIZE = 100;
+
     @Override
     public int reindexAll() {
         if (!isAvailable()) {
@@ -380,26 +388,37 @@ public class EsPostServiceImpl implements EsPostService {
             return 0;
         }
 
-        log.info("开始全量 chunk 索引：从数据库导入所有帖子...");
-
-        QueryWrapper<Post> wrapper = new QueryWrapper<>();
-        wrapper.eq("is_deleted", 0).eq("status", 1);
-        List<Post> posts = postMapper.selectList(wrapper);
+        log.info("开始全量 chunk 索引（分页批处理, 每批 {} 条）...", REINDEX_BATCH_SIZE);
 
         int success = 0;
-        for (int i = 0; i < posts.size(); i++) {
-            try {
-                indexPost(posts.get(i));
-                success++;
-                if ((i + 1) % 20 == 0) {
-                    log.info("全量 chunk 索引进度: {}/{}", i + 1, posts.size());
+        int total = 0;
+        long currentPage = 1;
+
+        while (true) {
+            QueryWrapper<Post> wrapper = new QueryWrapper<>();
+            wrapper.eq("is_deleted", 0).eq("status", 1);
+            IPage<Post> page = postMapper.selectPage(
+                    new Page<>(currentPage, REINDEX_BATCH_SIZE), wrapper);
+            List<Post> posts = page.getRecords();
+
+            if (posts.isEmpty()) break;
+
+            total += posts.size();
+            for (Post post : posts) {
+                try {
+                    indexPost(post);
+                    success++;
+                } catch (Exception e) {
+                    log.warn("索引帖子失败 - postId: {}, error: {}", post.getId(), e.getMessage());
                 }
-            } catch (Exception e) {
-                log.warn("索引帖子失败 - postId: {}, error: {}", posts.get(i).getId(), e.getMessage());
             }
+            log.info("全量索引进度: 已处理 {}/{}, 成功 {}", total, page.getTotal(), success);
+
+            if (currentPage >= page.getPages()) break;
+            currentPage++;
         }
 
-        log.info("全量 chunk 索引完成: 成功 {}/{}", success, posts.size());
+        log.info("全量 chunk 索引完成: 成功 {}/{}", success, total);
         return success;
     }
 

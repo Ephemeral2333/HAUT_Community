@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
  * <p>
  * 流程：
  * 1. [Query 改写] 用 DeepSeek 生成 2 条扩展子查询，多路检索提高召回率
- * 2. [多路向量检索 + 合并去重] 对原始问题及改写问题各自检索，按 postId 合并
+ * 2. [多路向量检索 + 合并去重] 对原始问题及改写问题并行检索，按 postId 合并
  * 3. [Reranker] 用 DeepSeek LLM 对候选文档按相关性精排，取 Top-K
  * 4. [生成] 构建 Prompt，调用 LLM 生成最终回答
  */
@@ -31,14 +32,22 @@ public class RagServiceImpl implements RagService {
     @Autowired
     private EsPostService esPostService;
 
-    /** 每路检索的候选帖子数（多路合并后再精排） */
     private static final int RETRIEVE_PER_QUERY = 10;
-
-    /** 精排后送入 LLM 的最终帖子数 */
     private static final int FINAL_TOP_K = 5;
-
-    /** RAG 生成时每篇帖子内容的最大字符数 */
     private static final int CONTEXT_CHUNK_MAX_LEN = 500;
+
+    /** 向量搜索得分低于此阈值的结果视为不相关（cosineSimilarity + 1.0，范围 0~2） */
+    private static final double VECTOR_SCORE_THRESHOLD = 1.3;
+
+    private static final ExecutorService RETRIEVAL_POOL =
+            new ThreadPoolExecutor(3, 6, 60, TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<>(50),
+                    r -> {
+                        Thread t = new Thread(r, "rag-retrieval");
+                        t.setDaemon(true);
+                        return t;
+                    },
+                    new ThreadPoolExecutor.CallerRunsPolicy());
 
     private static final String RAG_SYSTEM_PROMPT = """
             你是「校园社区」的智能助手。你的任务是基于检索到的社区帖子内容来回答用户的问题。
@@ -65,11 +74,12 @@ public class RagServiceImpl implements RagService {
                     .build();
         }
 
+        long startTime = System.currentTimeMillis();
         log.info("RAG 问答开始 - 问题: {}", question);
 
         // ========== Step 1: Query 改写 ==========
         List<String> queries = new ArrayList<>();
-        queries.add(question); // 保留原始问题
+        queries.add(question);
 
         List<String> rewritten = aiService.rewriteQuery(question);
         if (!rewritten.isEmpty()) {
@@ -77,19 +87,9 @@ public class RagServiceImpl implements RagService {
             log.info("Query 改写扩展: {} 条子查询", rewritten.size());
         }
 
-        // ========== Step 2: 多路检索 + 合并去重 ==========
-        // 使用 LinkedHashMap 按 postId 去重，优先保留得分更高的结果
-        Map<Long, SearchResultVo> candidatesMap = new LinkedHashMap<>();
+        // ========== Step 2: 多路并行检索 + 合并去重 ==========
+        Map<Long, SearchResultVo> candidatesMap = parallelRetrieve(queries);
 
-        for (String q : queries) {
-            List<SearchResultVo> results = esPostService.searchByVector(q, RETRIEVE_PER_QUERY);
-            for (SearchResultVo r : results) {
-                candidatesMap.merge(r.getPostId(), r,
-                        (existing, incoming) -> existing.getScore() >= incoming.getScore() ? existing : incoming);
-            }
-        }
-
-        // 向量检索无结果时，降级为关键词检索
         if (candidatesMap.isEmpty()) {
             log.info("向量检索无结果，降级为关键词搜索");
             List<SearchResultVo> kwResults = esPostService.searchByKeyword(question, 0, RETRIEVE_PER_QUERY);
@@ -115,11 +115,7 @@ public class RagServiceImpl implements RagService {
             SearchResultVo post = ranked.get(i);
             context.append("--- 帖子").append(i + 1).append(" ---\n");
             context.append("标题: ").append(post.getTitle()).append("\n");
-            String content = post.getContent();
-            if (content != null && content.length() > CONTEXT_CHUNK_MAX_LEN) {
-                content = content.substring(0, CONTEXT_CHUNK_MAX_LEN) + "...";
-            }
-            context.append("内容: ").append(content).append("\n\n");
+            context.append("内容: ").append(truncateAtSentence(post.getContent(), CONTEXT_CHUNK_MAX_LEN)).append("\n\n");
         }
 
         String userMessage = "【参考帖子内容】\n" + context + "\n【用户问题】\n" + question;
@@ -137,13 +133,42 @@ public class RagServiceImpl implements RagService {
                         .build())
                 .collect(Collectors.toList());
 
-        log.info("RAG 问答完成 - 引用 {} 篇帖子", sources.size());
+        log.info("RAG 问答完成 - 引用 {} 篇帖子, 耗时 {}ms", sources.size(), System.currentTimeMillis() - startTime);
         return RagResponse.builder().answer(answer).sources(sources).build();
     }
 
     /**
-     * 使用 LLM Reranker 对候选帖子精排，返回 Top-K 结果
-     * 若 Reranker 调用失败则直接按向量相似度截取 Top-K（降级）
+     * 多路并行向量检索，使用线程池同时发起多个查询，合并去重并过滤低分结果
+     */
+    private Map<Long, SearchResultVo> parallelRetrieve(List<String> queries) {
+        List<CompletableFuture<List<SearchResultVo>>> futures = queries.stream()
+                .map(q -> CompletableFuture.supplyAsync(
+                        () -> esPostService.searchByVector(q, RETRIEVE_PER_QUERY), RETRIEVAL_POOL)
+                        .exceptionally(ex -> {
+                            log.warn("向量检索异常: query={}, error={}", q, ex.getMessage());
+                            return Collections.emptyList();
+                        }))
+                .collect(Collectors.toList());
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        Map<Long, SearchResultVo> candidatesMap = new ConcurrentHashMap<>();
+        for (CompletableFuture<List<SearchResultVo>> future : futures) {
+            List<SearchResultVo> results = future.join();
+            for (SearchResultVo r : results) {
+                if (r.getScore() < VECTOR_SCORE_THRESHOLD) {
+                    continue;
+                }
+                candidatesMap.merge(r.getPostId(), r,
+                        (existing, incoming) -> existing.getScore() >= incoming.getScore() ? existing : incoming);
+            }
+        }
+        return candidatesMap;
+    }
+
+    /**
+     * 使用 LLM Reranker 对候选帖子精排，返回 Top-K 结果。
+     * 降级时按向量得分排序后取 Top-K。
      */
     private List<SearchResultVo> rerank(String question, List<SearchResultVo> candidates, int topK) {
         if (candidates.size() <= topK)
@@ -157,16 +182,37 @@ public class RagServiceImpl implements RagService {
         List<Integer> indices = aiService.rerankIndices(question, docTexts);
 
         if (indices == null || indices.isEmpty()) {
-            log.info("Reranker 不可用，降级为向量得分截取 Top-{}", topK);
-            return candidates.stream().limit(topK).collect(Collectors.toList());
+            log.info("Reranker 不可用，降级为向量得分排序取 Top-{}", topK);
+            return candidates.stream()
+                    .sorted(Comparator.comparingDouble(SearchResultVo::getScore).reversed())
+                    .limit(topK)
+                    .collect(Collectors.toList());
         }
 
-        // 过滤有效索引，按重排顺序取 Top-K
         return indices.stream()
                 .filter(i -> i >= 0 && i < candidates.size())
                 .distinct()
                 .limit(topK)
                 .map(candidates::get)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 在句子边界处截断文本，避免切断句子中间
+     */
+    private String truncateAtSentence(String text, int maxLen) {
+        if (text == null || text.length() <= maxLen) {
+            return text != null ? text : "";
+        }
+        String sub = text.substring(0, maxLen);
+        int lastBreak = -1;
+        for (int i = sub.length() - 1; i >= maxLen / 2; i--) {
+            char c = sub.charAt(i);
+            if (c == '。' || c == '！' || c == '？' || c == '!' || c == '?' || c == '\n') {
+                lastBreak = i + 1;
+                break;
+            }
+        }
+        return (lastBreak > 0 ? sub.substring(0, lastBreak) : sub) + "...";
     }
 }

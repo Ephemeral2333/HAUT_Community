@@ -147,6 +147,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    public void resetPasswordByEmail(String email, String newPass) {
+        SysUser sysUser = sysUserMapper.selectByEmail(email);
+        sysUser.setPassword(MD5.encrypt(newPass));
+        sysUserMapper.updateById(sysUser);
+        log.info("用户通过邮箱找回密码成功, email: {}", email);
+    }
+
+    @Override
     public void updateProfile(UserVo userVo) {
         sysUserMapper.updateProfile(userVo);
     }

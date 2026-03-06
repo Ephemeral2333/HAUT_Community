@@ -161,6 +161,36 @@ public class IndexController {
         return Result.ok();
     }
 
+    @ApiOperation("发送找回密码验证码")
+    @GetMapping("/sendResetCode")
+    @RateLimit(prefix = "limit:resetEmail:", key = "#email", limit = 1, period = 60, message = "验证码发送太频繁，请60秒后再试")
+    public Result sendResetCode(@RequestParam String email) {
+        if (sysUserService.getByEmail(email) == null) {
+            return Result.build(null, ResultCodeEnum.NO_USER);
+        }
+        String verifyCode = VCodeUtil.verifyCode(6);
+        redisTemplate.opsForValue().set(email + "reset", verifyCode, 5 * 60, TimeUnit.SECONDS);
+        messageProducer.sendResetPasswordEmail(email, verifyCode);
+        return Result.ok();
+    }
+
+    @ApiOperation("找回密码（通过邮箱验证码重置）")
+    @PostMapping("/resetPassword")
+    public Result resetPassword(@RequestParam String email,
+                                @RequestParam String code,
+                                @RequestParam String pass) {
+        if (sysUserService.getByEmail(email) == null) {
+            return Result.build(null, ResultCodeEnum.NO_USER);
+        }
+        String cachedCode = redisTemplate.opsForValue().get(email + "reset");
+        if (cachedCode == null || !cachedCode.equals(code)) {
+            return Result.verifyError();
+        }
+        sysUserService.resetPasswordByEmail(email, pass);
+        redisTemplate.delete(email + "reset");
+        return Result.ok();
+    }
+
     @ApiOperation("修改个人信息")
     @PostMapping("/update/profile")
     public Result updateProfile(@RequestBody UserVo userVo) {

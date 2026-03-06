@@ -64,6 +64,15 @@ public class MessageProducer {
     }
 
     /**
+     * 发送找回密码验证码邮件（异步）
+     */
+    public void sendResetPasswordEmail(String to, String code) {
+        String subject = "【校园社区】找回密码验证码";
+        String content = "您正在找回密码，验证码是：" + code + "，有效期5分钟，请勿泄露给他人。\n如非本人操作，请忽略此邮件。";
+        sendEmailMessage(to, subject, content, EmailMessage.EmailType.RESET_PASSWORD);
+    }
+
+    /**
      * 发送审核结果邮件（异步）
      */
     public void sendApproveEmail(String to, String title, boolean approved, String reason) {

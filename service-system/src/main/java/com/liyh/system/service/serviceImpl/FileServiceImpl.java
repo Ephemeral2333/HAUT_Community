@@ -86,8 +86,7 @@ public class FileServiceImpl implements FileService {
             if (res.isOK() && res.isJson()) {
                 String returnedKey = (String) JSONObject.parseObject(res.bodyString()).get("key");
                 log.info("文件上传成功, key: {}", returnedKey);
-                // 只返回相对 Key，不含域名前缀
-                return returnedKey;
+                return getFullUrl(returnedKey);
             } else {
                 log.error("七牛云上传失败: {}", res.bodyString());
                 return null;

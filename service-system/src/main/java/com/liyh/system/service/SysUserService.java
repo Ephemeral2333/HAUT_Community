@@ -35,6 +35,8 @@ public interface SysUserService extends IService<SysUser> {
 
     void modifyPass(String pass, String userId);
 
+    void resetPasswordByEmail(String email, String newPass);
+
     void updateProfile(UserVo userVo);
 
     UserInfoCountVo getUserInfoCount(String userId);

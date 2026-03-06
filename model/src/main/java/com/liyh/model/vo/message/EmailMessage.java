@@ -57,6 +57,10 @@ public class EmailMessage implements Serializable {
         /**
          * 审核结果
          */
-        APPROVE
+        APPROVE,
+        /**
+         * 找回密码
+         */
+        RESET_PASSWORD
     }
 }

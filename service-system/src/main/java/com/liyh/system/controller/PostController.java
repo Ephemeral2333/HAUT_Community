@@ -1,19 +1,15 @@
 package com.liyh.system.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.common.result.Result;
 import com.liyh.common.utils.JwtHelper;
 import com.liyh.model.entity.Post;
-import com.liyh.model.entity.Tag;
 import com.liyh.model.system.SysUser;
-import com.liyh.model.vo.FollowerVo;
 import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.PostVo;
 import com.liyh.model.vo.UserVo;
 import com.liyh.system.annotation.RedisLock;
-import com.liyh.system.service.FollowService;
 import com.liyh.system.service.FileService;
 import com.liyh.system.service.PostService;
 import com.liyh.system.service.SysUserService;

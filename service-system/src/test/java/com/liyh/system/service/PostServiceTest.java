@@ -15,6 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.liyh.model.entity.Collect;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -125,7 +127,7 @@ class PostServiceTest {
         postService.collect(USER_ID, POST_ID);
 
         verify(redisUtil).setAdd(RedisConstant.USER_COLLECTED_POSTS + USER_ID, POST_ID);
-        verify(collectMapper).insert(any());
+        verify(collectMapper).insert(any(Collect.class));
     }
 
     @Test
@@ -137,7 +139,7 @@ class PostServiceTest {
 
         verify(redisUtil).setRemove(RedisConstant.USER_COLLECTED_POSTS + USER_ID, POST_ID);
         verify(collectMapper).unCollect(USER_ID, POST_ID);
-        verify(collectMapper, never()).insert(any());
+        verify(collectMapper, never()).insert(any(Collect.class));
     }
 
     // ==================== publishScheduledPost ====================
@@ -149,7 +151,7 @@ class PostServiceTest {
 
         postService.publishScheduledPost(POST_ID);
 
-        verify(postMapper, never()).updateById(any());
+        verify(postMapper, never()).updateById(any(Post.class));
     }
 
     @Test
@@ -162,7 +164,7 @@ class PostServiceTest {
 
         postService.publishScheduledPost(POST_ID);
 
-        verify(postMapper, never()).updateById(any());
+        verify(postMapper, never()).updateById(any(Post.class));
     }
 
     @Test
@@ -175,7 +177,7 @@ class PostServiceTest {
 
         postService.publishScheduledPost(POST_ID);
 
-        verify(postMapper, never()).updateById(any());
+        verify(postMapper, never()).updateById(any(Post.class));
     }
 
     @Test
@@ -189,7 +191,7 @@ class PostServiceTest {
 
         postService.publishScheduledPost(POST_ID);
 
-        verify(postMapper).updateById(argThat(post -> post.getStatus() == 1));
+        verify(postMapper).updateById(argThat((Post post) -> post.getStatus() == 1));
     }
 
     // ==================== deletePost ====================

@@ -2,9 +2,9 @@ spring:
   application:
     name: service-system
   profiles:
-    active: dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
 app:
   universal-login:
-    enabled: true
-    password: admin123
+    enabled: ${APP_UNIVERSAL_LOGIN_ENABLED:false}
+    password: ${APP_UNIVERSAL_LOGIN_PASSWORD:}

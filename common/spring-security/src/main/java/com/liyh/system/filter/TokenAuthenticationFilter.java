@@ -36,19 +36,28 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return "/admin/system/index/login".equals(uri)
+                || "/favicon.ico".equals(uri)
+                || uri.startsWith("/swagger-resources")
+                || uri.startsWith("/webjars/")
+                || uri.startsWith("/v2/api-docs")
+                || uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-ui")
+                || "/swagger-ui.html".equals(uri)
+                || "/doc.html".equals(uri)
+                || uri.startsWith("/front/")
+                || "/admin/system/index/register".equals(uri)
+                || "/admin/system/index/sendCode".equals(uri)
+                || "/admin/system/index/sendResetCode".equals(uri)
+                || "/admin/system/index/resetPassword".equals(uri);
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         logger.info("uri:" + request.getRequestURI());
-        //如果是登录接口，直接放行
-        if ("/admin/system/index/login".equals(request.getRequestURI())) {
-            chain.doFilter(request, response);
-            return;
-        }
-        // 如果是前台接口，直接放行
-//        if(request.getRequestURI().contains("/front/")) {
-//            chain.doFilter(request, response);
-//            return;
-//        }
 
         UsernamePasswordAuthenticationToken authentication = getAuthentication(request);
         if (null != authentication) {

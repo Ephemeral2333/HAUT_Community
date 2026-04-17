@@ -94,6 +94,12 @@
             <artifactId>okhttp-sse</artifactId>
         </dependency>
 
+        <!-- OkHttp 4.x / 七牛 SDK 运行时依赖 Kotlin 标准库 -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+        </dependency>
+
         <!-- Bean Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

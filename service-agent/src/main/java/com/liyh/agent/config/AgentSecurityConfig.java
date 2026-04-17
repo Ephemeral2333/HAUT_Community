@@ -35,7 +35,7 @@ public class AgentSecurityConfig {
                                 "/doc.html",
                                 "/front/**"
                         ).permitAll()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

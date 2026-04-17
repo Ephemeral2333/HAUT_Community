@@ -44,12 +44,14 @@ public class AgentController {
     @Operation(summary = "智能 Agent - 可自动调用搜索/RAG/用户查询等工具")
     @PostMapping("/smart")
     public Result<String> smart(@RequestParam @NotBlank @Size(max = 500) String message,
+                                @RequestParam(required = false) String sessionId,
                                 HttpServletRequest request) {
         if (!aiProperties.isEnabled()) return Result.fail("AI Agent 服务未启用");
         Result<?> limit = checkRateLimit(request);
         if (limit != null) return Result.fail(limit.getMessage());
-        log.info("[Agent] smart chat: {}", message);
-        return Result.ok(communityAgent.agentChat(message.trim()));
+        String sid = (sessionId != null && !sessionId.isBlank()) ? sessionId : getClientIp(request);
+        log.info("[Agent] smart chat, session={}: {}", sid, message);
+        return Result.ok(communityAgent.agentChat(sid, message.trim()));
     }
 
     @Operation(summary = "Agent 服务状态")

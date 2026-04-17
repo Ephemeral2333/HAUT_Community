@@ -1,5 +1,8 @@
 package com.liyh.agent.service;
 
+import com.liyh.model.entity.Comment;
+import com.liyh.model.entity.Post;
+import com.liyh.model.entity.Tag;
 import com.liyh.model.vo.UserVo;
 import com.liyh.model.vo.ai.RagResponse;
 import com.liyh.model.vo.ai.SearchResultVo;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -43,8 +47,9 @@ public class AgentTools {
                 return "未找到与 \"" + keyword + "\" 相关的帖子。";
             }
             return posts.stream()
-                    .map(p -> String.format("【帖子ID: %d】%s", p.getId(), p.getTitle()))
-                    .collect(Collectors.joining("\n"));
+                    .map(p -> String.format("【帖子ID: %d】%s%n摘要: %s",
+                            p.getId(), p.getTitle(), truncate(p.getContent(), 100)))
+                    .collect(Collectors.joining("\n---\n"));
         } catch (Exception e) {
             log.error("[AgentTool] searchPosts error", e);
             return "搜索帖子时发生错误：" + e.getMessage();
@@ -87,6 +92,63 @@ public class AgentTools {
         } catch (Exception e) {
             log.error("[AgentTool] getHotPosts error", e);
             return "获取热门帖子时发生错误：" + e.getMessage();
+        }
+    }
+
+    @Tool("根据帖子ID获取帖子的完整内容，包括标题、正文、作者、标签、浏览数和点赞数")
+    public String getPostDetail(Long postId) {
+        log.info("[AgentTool] getPostDetail: {}", postId);
+        try {
+            Post post = agentCommunityQueryService.getPostDetail(postId);
+            if (post == null) {
+                return "未找到 ID 为 " + postId + " 的帖子。";
+            }
+            List<Tag> tags = agentCommunityQueryService.getPostTags(postId);
+            String tagStr = tags.isEmpty() ? "无"
+                    : tags.stream().map(Tag::getName).collect(Collectors.joining(", "));
+            String author = post.getAuthor() != null ? post.getAuthor().getNickname() : "匿名";
+            return String.format("【%s】%n作者: %s%n标签: %s%n浏览: %d | 点赞: %d%n%n%s",
+                    post.getTitle(), author, tagStr, post.getView(), post.getFavor(),
+                    truncate(post.getContent(), 500));
+        } catch (Exception e) {
+            log.error("[AgentTool] getPostDetail error", e);
+            return "获取帖子详情时发生错误：" + e.getMessage();
+        }
+    }
+
+    @Tool("获取帖子的评论列表，传入帖子ID，返回最多5条热门评论内容")
+    public String getPostComments(Long postId) {
+        log.info("[AgentTool] getPostComments: {}", postId);
+        try {
+            List<Comment> comments = agentCommunityQueryService.getPostComments(postId, 5);
+            if (comments.isEmpty()) {
+                return "该帖子暂无评论。";
+            }
+            return comments.stream()
+                    .map(c -> String.format("%s: %s",
+                            c.getUsername() != null ? c.getUsername() : "用户" + c.getUserId(),
+                            truncate(c.getContent(), 100)))
+                    .collect(Collectors.joining("\n"));
+        } catch (Exception e) {
+            log.error("[AgentTool] getPostComments error", e);
+            return "获取评论时发生错误：" + e.getMessage();
+        }
+    }
+
+    @Tool("获取社区当前热门标签列表，用于了解社区热点话题或按话题分类浏览")
+    public String getHotTags() {
+        log.info("[AgentTool] getHotTags");
+        try {
+            List<Tag> tags = agentCommunityQueryService.getHotTags();
+            if (tags.isEmpty()) {
+                return "暂无热门标签。";
+            }
+            return tags.stream()
+                    .map(t -> String.format("%s（%d篇）", t.getName(), t.getTopicCount()))
+                    .collect(Collectors.joining(" | "));
+        } catch (Exception e) {
+            log.error("[AgentTool] getHotTags error", e);
+            return "获取热门标签时发生错误：" + e.getMessage();
         }
     }
 

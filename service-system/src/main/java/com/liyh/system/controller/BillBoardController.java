@@ -10,14 +10,14 @@ import com.liyh.model.vo.Pagination;
 import com.liyh.system.mq.producer.MessageProducer;
 import com.liyh.system.service.BillBoardService;
 import com.liyh.system.service.SysUserService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.liyh.common.result.Result;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +26,7 @@ import java.util.Map;
  * @Description 公告牌controller
  * @Date 2023/6/5 17:49
  **/
-@Api(tags = "公告牌接口")
+@Tag(name = "公告牌接口")
 @RestController
 @Slf4j
 public class BillBoardController {
@@ -39,14 +39,14 @@ public class BillBoardController {
     @Autowired
     private SysUserService sysUserService;
 
-    @ApiOperation("获取公告牌")
+    @Operation(summary = "获取公告牌")
     @GetMapping("/front/billboard/show")
     public Result<Billboard> getNotices() {
         Billboard billboard = billBoardService.selectOrderByTime();
         return Result.ok(billboard);
     }
 
-    @ApiOperation("获取分页列表")
+    @Operation(summary = "获取分页列表")
     @PostMapping("/admin/billboard/getPageList")
     public Result getPageList(@RequestBody Pagination pagination) {
         Page<Billboard> billboards = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
@@ -59,7 +59,7 @@ public class BillBoardController {
         return Result.ok(map);
     }
 
-    @ApiOperation("添加公告牌")
+    @Operation(summary = "添加公告牌")
     @PostMapping("/admin/billboard/save")
     public Result addBillBoard(@RequestBody JsonNode jsonNode) {
         String content = jsonNode.get("content").asText();
@@ -67,7 +67,7 @@ public class BillBoardController {
         return Result.ok();
     }
 
-    @ApiOperation("修改公告牌")
+    @Operation(summary = "修改公告牌")
     @PutMapping("/admin/billboard/update/{id}")
     public Result updateBillBoard(@RequestBody JsonNode jsonNode, @PathVariable("id") Long id) {
         String content = jsonNode.get("content").asText();
@@ -75,7 +75,7 @@ public class BillBoardController {
         return Result.ok();
     }
 
-    @ApiOperation("删除公告牌")
+    @Operation(summary = "删除公告牌")
     @DeleteMapping("/admin/billboard/delete/{id}")
     public Result deleteBillBoard(@PathVariable("id") Long id) {
         billBoardService.deleteBillBoard(id);
@@ -84,7 +84,7 @@ public class BillBoardController {
 
     // ==================== 广播公告功能 ====================
 
-    @ApiOperation("广播系统公告（给所有用户发送通知）")
+    @Operation(summary = "广播系统公告（给所有用户发送通知）")
     @PostMapping("/admin/billboard/broadcast")
     public Result broadcastAnnouncement(@RequestBody JsonNode jsonNode, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -125,7 +125,7 @@ public class BillBoardController {
         return Result.ok(result);
     }
 
-    @ApiOperation("广播系统维护通知")
+    @Operation(summary = "广播系统维护通知")
     @PostMapping("/admin/billboard/broadcast/maintenance")
     public Result broadcastMaintenance(@RequestBody JsonNode jsonNode, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -157,7 +157,7 @@ public class BillBoardController {
         return Result.ok(result);
     }
 
-    @ApiOperation("广播活动通知")
+    @Operation(summary = "广播活动通知")
     @PostMapping("/admin/billboard/broadcast/activity")
     public Result broadcastActivity(@RequestBody JsonNode jsonNode, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));

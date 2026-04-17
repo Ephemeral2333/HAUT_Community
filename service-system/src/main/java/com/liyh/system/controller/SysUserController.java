@@ -10,19 +10,19 @@ import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.SysUserQueryVo;
 import com.liyh.model.vo.UserInfoCountVo;
 import com.liyh.system.service.SysUserService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
 
-@Api(tags = "用户管理")
+@Tag(name = "用户管理")
 @RestController
 @RequestMapping("/admin/system/sysUser")
 @CrossOrigin
@@ -38,7 +38,7 @@ public class SysUserController {
     @Value("${app.default-avatar}")
     private String defaultAvatar;
 
-    @ApiOperation(value = "获取分页列表")
+    @Operation(summary = "获取分页列表")
     @PostMapping("/getPageList")
     public Result index(@RequestBody Pagination pagination) {
         Page<SysUser> pageParam = new Page<>(pagination.getCurrentPage(),
@@ -53,14 +53,14 @@ public class SysUserController {
         return Result.ok(map);
     }
 
-    @ApiOperation(value = "获取用户")
+    @Operation(summary = "获取用户")
     @GetMapping("/get/{id}")
     public Result get(@PathVariable Long id) {
         SysUser user = sysUserService.getById(id);
         return Result.ok(user);
     }
 
-    @ApiOperation(value = "保存用户")
+    @Operation(summary = "保存用户")
     @PostMapping("/save")
     public Result save(@RequestBody SysUser user) {
         user.setDeptId(user.getParentId());
@@ -81,7 +81,7 @@ public class SysUserController {
         }
     }
 
-    @ApiOperation(value = "更新用户")
+    @Operation(summary = "更新用户")
     @PutMapping("/update/{id}")
     public Result updateById(@PathVariable Long id, @RequestBody SysUser user) {
         user.setId(id);
@@ -91,7 +91,7 @@ public class SysUserController {
         return Result.ok();
     }
 
-    @ApiOperation(value = "删除用户")
+    @Operation(summary = "删除用户")
     @DeleteMapping("/remove/{id}")
     public Result remove(@PathVariable Long id) {
         sysUserService.deleteRoleUserByUserId(id);
@@ -99,7 +99,7 @@ public class SysUserController {
         return Result.ok();
     }
 
-    @ApiOperation(value = "更新状态")
+    @Operation(summary = "更新状态")
     @PutMapping("updateStatus/{id}/{status}")
     public Result updateStatus(@PathVariable String id, @PathVariable Integer status) {
         log.info("更新用户状态, id: {}, status: {}", id, status);
@@ -107,14 +107,14 @@ public class SysUserController {
         return Result.ok();
     }
 
-    @ApiOperation(value = "重置密码")
+    @Operation(summary = "重置密码")
     @PutMapping("resetPassword/{id}")
     public Result resetPass(@PathVariable Long id) {
         sysUserService.resetPassword(id);
         return Result.ok();
     }
 
-    @ApiOperation("获取用户统计信息")
+    @Operation(summary = "获取用户统计信息")
     @GetMapping("/count/info")
     public Result<UserInfoCountVo> getUserInfoCount(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));

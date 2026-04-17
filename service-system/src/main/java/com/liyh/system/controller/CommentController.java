@@ -5,26 +5,26 @@ import com.liyh.common.utils.JwtHelper;
 import com.liyh.model.vo.CommentPostVo;
 import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.service.CommentService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @Author LiYH
  * @Description 评论管理
  * @Date 2023/6/16 19:57
  **/
-@Api(tags = "评论管理")
+@Tag(name = "评论管理")
 @RestController
 public class CommentController {
     @Autowired
     private CommentService commentService;
 
-    @ApiOperation(value = "获取某话题评论列表")
+    @Operation(summary = "获取某话题评论列表")
     @GetMapping("/front/comment/getComments/{id}")
     public Result getTopicCommentList(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -35,7 +35,7 @@ public class CommentController {
         }
     }
 
-    @ApiOperation(value = "评论操作")
+    @Operation(summary = "评论操作")
     @PostMapping("/admin/comments/pushComments")
     @RateLimit(prefix = "limit:comment:", limitType = RateLimit.LimitType.USER, limit = 1, period = 10,
                message = "评论太频繁，请10秒后再试")
@@ -49,7 +49,7 @@ public class CommentController {
         return Result.ok();
     }
 
-    @ApiOperation(value = "点赞操作")
+    @Operation(summary = "点赞操作")
     @PostMapping("/admin/comments/favor/{id}")
     public Result favor(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -61,7 +61,7 @@ public class CommentController {
         return Result.ok();
     }
 
-    @ApiOperation("对评论进行回复")
+    @Operation(summary = "对评论进行回复")
     @PostMapping("/admin/comments/reply")
     @RateLimit(prefix = "limit:reply:", limitType = RateLimit.LimitType.USER, limit = 1, period = 10,
                message = "回复太频繁，请10秒后再试")
@@ -75,7 +75,7 @@ public class CommentController {
         return Result.ok();
     }
 
-    @ApiOperation("删除评论")
+    @Operation(summary = "删除评论")
     @DeleteMapping("/admin/comments/delete/{id}")
     public Result deleteComment(@PathVariable Long id) {
         commentService.removeById(id);

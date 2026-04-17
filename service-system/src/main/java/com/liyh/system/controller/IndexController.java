@@ -14,15 +14,15 @@ import com.liyh.system.exception.AuthException;
 import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.mq.producer.MessageProducer;
 import com.liyh.system.service.SysUserService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * @Description 首页控制器
  * @Date 2023/5/9 17:35
  **/
-@Api(tags = "用户登录接口")
+@Tag(name = "用户登录接口")
 @RestController
 @RequestMapping("/admin/system/index")
 @Slf4j
@@ -79,7 +79,7 @@ public class IndexController {
         return Result.ok(map);
     }
 
-    @ApiOperation(value = "注册")
+    @Operation(summary = "注册")
     @PostMapping("/register")
     @RateLimit(prefix = "limit:register:", limitType = RateLimit.LimitType.IP, limit = 3, period = 60, message = "注册太频繁，请1分钟后再试")
     public Result register(@RequestBody RegisterVo registerVo) throws Exception {
@@ -94,7 +94,7 @@ public class IndexController {
         return Result.ok();
     }
 
-    @ApiOperation(value = "发送邮箱验证码")
+    @Operation(summary = "发送邮箱验证码")
     @GetMapping("sendCode")
     @RateLimit(prefix = "limit:email:", key = "#email", limit = 1, period = 60, message = "验证码发送太频繁，请60秒后再试")
     public Result sendCode(@RequestParam String email) {
@@ -110,7 +110,7 @@ public class IndexController {
         return Result.ok();
     }
 
-    @ApiOperation("获取用户信息")
+    @Operation(summary = "获取用户信息")
     @GetMapping("/info")
     public Result<UserVo> info(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -125,7 +125,7 @@ public class IndexController {
         return Result.ok(sysUser);
     }
 
-    @ApiOperation("退出登录")
+    @Operation(summary = "退出登录")
     @PostMapping("/logout")
     public Result logout(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -133,7 +133,7 @@ public class IndexController {
         return Result.ok();
     }
 
-    @ApiOperation("保存头像")
+    @Operation(summary = "保存头像")
     @PostMapping("/savePhoto/{id}")
     public Result saveAvatar(@RequestBody JsonNode jsonNode, @PathVariable("id") Long id) {
         String url = jsonNode.get("url").asText();
@@ -152,7 +152,7 @@ public class IndexController {
         return Result.ok();
     }
 
-    @ApiOperation("修改密码")
+    @Operation(summary = "修改密码")
     @PostMapping("/modify/password")
     public Result modifyPass(@RequestParam("pass") String pass,
             HttpServletRequest request) {
@@ -161,7 +161,7 @@ public class IndexController {
         return Result.ok();
     }
 
-    @ApiOperation("发送找回密码验证码")
+    @Operation(summary = "发送找回密码验证码")
     @GetMapping("/sendResetCode")
     @RateLimit(prefix = "limit:resetEmail:", key = "#email", limit = 1, period = 60, message = "验证码发送太频繁，请60秒后再试")
     public Result sendResetCode(@RequestParam String email) {
@@ -174,7 +174,7 @@ public class IndexController {
         return Result.ok();
     }
 
-    @ApiOperation("找回密码（通过邮箱验证码重置）")
+    @Operation(summary = "找回密码（通过邮箱验证码重置）")
     @PostMapping("/resetPassword")
     public Result resetPassword(@RequestParam String email,
                                 @RequestParam String code,
@@ -191,7 +191,7 @@ public class IndexController {
         return Result.ok();
     }
 
-    @ApiOperation("修改个人信息")
+    @Operation(summary = "修改个人信息")
     @PostMapping("/update/profile")
     public Result updateProfile(@RequestBody UserVo userVo) {
         sysUserService.updateProfile(userVo);

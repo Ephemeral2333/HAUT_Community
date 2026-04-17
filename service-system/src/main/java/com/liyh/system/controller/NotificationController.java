@@ -7,13 +7,13 @@ import com.liyh.common.utils.JwtHelper;
 import com.liyh.model.vo.NotificationVo;
 import com.liyh.model.vo.Pagination;
 import com.liyh.system.service.NotificationService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,7 +22,7 @@ import java.util.Map;
  *
  * @Author LiYH
  */
-@Api(tags = "站内通知")
+@Tag(name = "站内通知")
 @RestController
 @RequestMapping("/front/notification")
 @Slf4j
@@ -34,7 +34,7 @@ public class NotificationController {
     /**
      * 分页获取通知列表
      */
-    @ApiOperation("获取通知列表")
+    @Operation(summary = "获取通知列表")
     @PostMapping("/list")
     public Result getList(@RequestBody Pagination pagination,
                           @RequestParam(required = false) String types,
@@ -53,7 +53,7 @@ public class NotificationController {
     /**
      * 获取未读通知数量
      */
-    @ApiOperation("获取未读通知数量")
+    @Operation(summary = "获取未读通知数量")
     @GetMapping("/unread/count")
     public Result getUnreadCount(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -65,7 +65,7 @@ public class NotificationController {
     /**
      * 标记单条通知为已读
      */
-    @ApiOperation("标记单条为已读")
+    @Operation(summary = "标记单条为已读")
     @PutMapping("/read/{id}")
     public Result markAsRead(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -77,7 +77,7 @@ public class NotificationController {
     /**
      * 标记全部通知为已读
      */
-    @ApiOperation("标记全部已读")
+    @Operation(summary = "标记全部已读")
     @PutMapping("/read/all")
     public Result markAllAsRead(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -89,7 +89,7 @@ public class NotificationController {
     /**
      * 按类型标记通知为已读
      */
-    @ApiOperation("按类型标记已读")
+    @Operation(summary = "按类型标记已读")
     @PutMapping("/read/type/{type}")
     public Result markAsReadByType(@PathVariable Integer type, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -101,7 +101,7 @@ public class NotificationController {
     /**
      * 删除通知
      */
-    @ApiOperation("删除通知")
+    @Operation(summary = "删除通知")
     @DeleteMapping("/{id}")
     public Result delete(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));

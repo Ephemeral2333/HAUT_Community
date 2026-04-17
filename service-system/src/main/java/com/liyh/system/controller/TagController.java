@@ -7,8 +7,7 @@ import com.liyh.common.result.Result;
 import com.liyh.model.entity.Tag;
 import com.liyh.model.vo.Pagination;
 import com.liyh.system.service.TagService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,14 +19,14 @@ import java.util.Map;
  * @Description 标签管理
  * @Date 2023/6/18 15:59
  **/
-@Api(tags = "标签管理")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "标签管理")
 @RestController
 @RequestMapping("/admin/tag")
 public class TagController {
     @Autowired
     private TagService tagService;
 
-    @ApiOperation("分页查询标签")
+    @Operation(summary = "分页查询标签")
     @PostMapping("/list")
     public Result list(@RequestBody Pagination pagination) {
         Page<Tag> tagPage = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
@@ -40,7 +39,7 @@ public class TagController {
         return Result.ok(map);
     }
 
-    @ApiOperation("新增标签")
+    @Operation(summary = "新增标签")
     @PostMapping("/save")
     public Result save(@RequestBody JsonNode jsonNode) {
         String name = jsonNode.get("name").asText();
@@ -48,7 +47,7 @@ public class TagController {
         return Result.ok();
     }
 
-    @ApiOperation("修改标签")
+    @Operation(summary = "修改标签")
     @PutMapping("/update/{id}")
     public Result update(@RequestBody JsonNode jsonNode, @PathVariable("id") Long id) {
         String name = jsonNode.get("name").asText();
@@ -56,7 +55,7 @@ public class TagController {
         return Result.ok();
     }
 
-    @ApiOperation("删除标签")
+    @Operation(summary = "删除标签")
     @DeleteMapping("/delete/{id}")
     public Result delete(@PathVariable("id") Long id) {
         tagService.removeById(id);

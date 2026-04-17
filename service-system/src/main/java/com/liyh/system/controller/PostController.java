@@ -18,13 +18,12 @@ import com.liyh.system.service.FileService;
 import com.liyh.system.service.PostService;
 import com.liyh.system.service.SysUserService;
 import com.liyh.system.service.TagService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,7 +35,7 @@ import java.util.Map;
  * @Description 帖子管理
  * @Date 2023/6/6 20:13
  **/
-@Api(tags = "帖子管理")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "帖子管理")
 @RestController
 @Slf4j
 public class PostController {
@@ -52,7 +51,7 @@ public class PostController {
     @Autowired
     private FileService fileService;
 
-    @ApiOperation("分页查询帖子")
+    @Operation(summary = "分页查询帖子")
     @PostMapping("/front/post/list/{tab}")
     public Result getPageList(@RequestBody Pagination pagination, @PathVariable String tab) {
         Page<Post> tip = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
@@ -70,7 +69,7 @@ public class PostController {
         return Result.ok(map);
     }
 
-    @ApiOperation("发布帖子")
+    @Operation(summary = "发布帖子")
     @PostMapping("/front/post/save")
     @RedisLock(prefix = "lock:post:save:", key = "#request.getHeader('Authorization')", expireTime = 5, message = "发帖太频繁，请5秒后再试")
     public Result save(@RequestBody PostVo postVo, HttpServletRequest request) {
@@ -79,7 +78,7 @@ public class PostController {
         return Result.ok(post);
     }
 
-    @ApiOperation("修改帖子")
+    @Operation(summary = "修改帖子")
     @PutMapping("/front/post/update")
     public Result update(@RequestBody PostVo postVo, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -87,7 +86,7 @@ public class PostController {
         return Result.ok(post);
     }
 
-    @ApiOperation("获取帖子详情")
+    @Operation(summary = "获取帖子详情")
     @GetMapping("/front/post/{id}")
     public Result<?> getTopic(@PathVariable Long id, HttpServletRequest request) {
         Post post = postService.selectByPk(id);
@@ -108,7 +107,7 @@ public class PostController {
         return Result.ok(post);
     }
 
-    @ApiOperation("获取我的帖子")
+    @Operation(summary = "获取我的帖子")
     @PostMapping("/front/post/my")
     public Result getMyPost(@RequestBody Pagination pagination, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -122,13 +121,13 @@ public class PostController {
         return Result.ok(map);
     }
 
-    @ApiOperation("随机获取十个帖子")
+    @Operation(summary = "随机获取十个帖子")
     @GetMapping("/front/post/recommend")
     public Result getPostRandom() {
         return Result.ok(postService.selectPostRandom());
     }
 
-    @ApiOperation("删除帖子")
+    @Operation(summary = "删除帖子")
     @DeleteMapping("/front/post/delete/{id}")
     public Result deletePost(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -140,7 +139,7 @@ public class PostController {
         return Result.ok();
     }
 
-    @ApiOperation("获取所有帖子")
+    @Operation(summary = "获取所有帖子")
     @PostMapping("/admin/post/getPageList")
     public Result getAllPost(@RequestBody Pagination pagination) {
         Page<Post> page = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
@@ -153,7 +152,7 @@ public class PostController {
         return Result.ok(map);
     }
 
-    @ApiOperation("获取某标签下的帖子")
+    @Operation(summary = "获取某标签下的帖子")
     @PostMapping("/front/tag/getPageList/{id}")
     public Result getPostByLabelId(@PathVariable Long id,
             @RequestParam Integer page,
@@ -170,7 +169,7 @@ public class PostController {
         return Result.ok(map);
     }
 
-    @ApiOperation("获取用户主页的帖子")
+    @Operation(summary = "获取用户主页的帖子")
     @GetMapping("/front/user/info/{username}")
     public Result getPostByUserId(@PathVariable String username,
             @RequestParam Integer page,
@@ -193,28 +192,28 @@ public class PostController {
         return Result.ok(map);
     }
 
-    @ApiOperation("随机获取5个点赞的帖子")
+    @Operation(summary = "随机获取5个点赞的帖子")
     @GetMapping("/post/like/random")
     public Result getPostByLike(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         return Result.ok(postService.selectRandomPostByLike(userId));
     }
 
-    @ApiOperation("随机获取5个收藏的帖子")
+    @Operation(summary = "随机获取5个收藏的帖子")
     @GetMapping("/post/collect/random")
     public Result getPostByCollect(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         return Result.ok(postService.selectRandomPostByCollect(userId));
     }
 
-    @ApiOperation("随机获取我的5个帖子")
+    @Operation(summary = "随机获取我的5个帖子")
     @GetMapping("/post/my/random")
     public Result getPostByMy(HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         return Result.ok(postService.selectRandomPostByMy(userId));
     }
 
-    @ApiOperation("点赞帖子")
+    @Operation(summary = "点赞帖子")
     @GetMapping("/post/favor/{id}")
     public Result favor(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -222,14 +221,14 @@ public class PostController {
         return Result.ok();
     }
 
-    @ApiOperation("判断是否点赞帖子")
+    @Operation(summary = "判断是否点赞帖子")
     @GetMapping("/front/post/isFavor/{id}")
     public Result isFavor(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         return Result.ok(postService.isFavor(userId, id));
     }
 
-    @ApiOperation("取消点赞帖子")
+    @Operation(summary = "取消点赞帖子")
     @GetMapping("/post/unfavor/{id}")
     public Result unfavor(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -237,7 +236,7 @@ public class PostController {
         return Result.ok();
     }
 
-    @ApiOperation("增加转发量")
+    @Operation(summary = "增加转发量")
     @GetMapping("/front/post/increaseShareCount/{id}")
     public Result increaseShareCount(@PathVariable Long id) {
         postService.increaseShareCount(id);
@@ -245,7 +244,7 @@ public class PostController {
         return Result.ok();
     }
 
-    @ApiOperation("获取收藏帖子")
+    @Operation(summary = "获取收藏帖子")
     @PostMapping("/post/my/{tab}")
     public Result getMyCollects(@RequestBody Pagination pagination, HttpServletRequest request,
             @PathVariable String tab) {
@@ -265,14 +264,14 @@ public class PostController {
         return Result.ok(map);
     }
 
-    @ApiOperation("判断是否收藏帖子")
+    @Operation(summary = "判断是否收藏帖子")
     @GetMapping("/front/post/isCollect/{id}")
     public Result isCollect(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
         return Result.ok(postService.isCollect(userId, id));
     }
 
-    @ApiOperation("收藏或取消收藏")
+    @Operation(summary = "收藏或取消收藏")
     @GetMapping("/post/collect/{id}")
     public Result collect(@PathVariable Long id, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -280,14 +279,14 @@ public class PostController {
         return Result.ok();
     }
 
-    @ApiOperation("置顶/取消置顶帖子")
+    @Operation(summary = "置顶/取消置顶帖子")
     @PostMapping("/admin/post/top/{id}")
     public Result top(@PathVariable Long id) {
         postService.top(id);
         return Result.ok();
     }
 
-    @ApiOperation("加精/取消加精帖子")
+    @Operation(summary = "加精/取消加精帖子")
     @PostMapping("/admin/post/essence/{id}")
     public Result essence(@PathVariable Long id) {
         postService.essence(id);
@@ -296,7 +295,7 @@ public class PostController {
 
     // ==================== 定时发布功能 ====================
 
-    @ApiOperation("定时发布帖子")
+    @Operation(summary = "定时发布帖子")
     @PostMapping("/front/post/schedule")
     @RedisLock(prefix = "lock:post:schedule:", key = "#request.getHeader('Authorization')", expireTime = 5, message = "操作太频繁，请5秒后再试")
     public Result schedulePost(@RequestBody Map<String, Object> params, HttpServletRequest request) {

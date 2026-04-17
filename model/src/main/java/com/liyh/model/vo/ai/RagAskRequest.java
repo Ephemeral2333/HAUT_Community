@@ -1,25 +1,25 @@
 package com.liyh.model.vo.ai;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Data
-@ApiModel("RAG 智能问答请求")
+@Schema(description = "RAG 智能问答请求")
 public class RagAskRequest {
 
     @NotBlank(message = "问题不能为空")
     @Size(max = 500, message = "问题长度不能超过500字")
-    @ApiModelProperty(value = "用户问题", required = true)
+    @Schema(description = "用户问题")
     private String question;
 
     @Min(value = 1, message = "topK 最小为 1")
     @Max(value = 10, message = "topK 最大为 10")
-    @ApiModelProperty(value = "检索帖子数量", example = "5")
+    @Schema(description = "检索帖子数量")
     private Integer topK = 5;
 }

@@ -5,8 +5,8 @@ import com.liyh.model.system.SysDept;
 import com.liyh.model.system.SysUser;
 import com.liyh.system.service.SysDeptService;
 import com.liyh.system.service.SysUserService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ import java.util.List;
  * @Description 部门管理
  * @Date 2023/5/26 16:21
  **/
-@Api(tags = "部门管理接口")
+@Tag(name = "部门管理接口")
 @RestController
 @RequestMapping("/admin/system/dept")
 @Slf4j
@@ -36,7 +36,7 @@ public class SysDeptController {
      * @Param []
      * @return com.liyh.common.result.Result
      **/
-    @ApiOperation(value = "部门列表")
+    @Operation(summary = "部门列表")
     @GetMapping("/list")
     public Result list() {
         List<SysDept> deptList = sysDeptService.findAll();
@@ -50,7 +50,7 @@ public class SysDeptController {
      * @Param [sysDept]
      * @return com.liyh.common.result.Result
      **/
-    @ApiOperation(value = "新增部门")
+    @Operation(summary = "新增部门")
     @PostMapping("/save")
     public Result save(@RequestBody SysDept sysDept){
         SysUser sysUser = sysUserService.getByUsername(sysDept.getPrincipal());
@@ -69,7 +69,7 @@ public class SysDeptController {
      * @Param [id, sysDept]
      * @return com.liyh.common.result.Result
      **/
-    @ApiOperation(value = "更新部门")
+    @Operation(summary = "更新部门")
     @PutMapping("/update/{id}")
     public Result update(@PathVariable Long id, @RequestBody SysDept sysDept){
         log.info("sysDept:{}", sysDept);
@@ -90,7 +90,7 @@ public class SysDeptController {
      * @Param [id]
      * @return com.liyh.common.result.Result
      **/
-    @ApiOperation("删除部门")
+    @Operation(summary = "删除部门")
     @DeleteMapping("/delete/{id}")
     public Result delete(@PathVariable Long id){
         sysDeptService.removeById(id);

@@ -10,12 +10,12 @@ import com.liyh.model.vo.Pagination;
 import com.liyh.model.vo.TipPostVo;
 import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.service.TipPostService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,13 +25,13 @@ import java.util.Map;
  * @Description 每日一句投稿控制器
  * @Date 2023/6/20 9:50
  **/
-@Api(tags = "每日一句投稿管理")
+@Tag(name = "每日一句投稿管理")
 @RestController
 public class TipPostController {
     @Autowired
     private TipPostService tipPostService;
 
-    @ApiOperation(value = "投稿")
+    @Operation(summary = "投稿")
     @PostMapping("/tip/post")
     @RateLimit(prefix = "limit:tippost:", limitType = RateLimit.LimitType.USER, limit = 3, period = 86400,
                message = "今日投稿次数已达上限（每天最多3次）")
@@ -41,7 +41,7 @@ public class TipPostController {
         return Result.ok();
     }
 
-    @ApiOperation("获取分页列表")
+    @Operation(summary = "获取分页列表")
     @PostMapping("/admin/tip/post/list")
     public Result getPageList(@RequestBody Pagination pagination) {
         Page<TipPost> tipPostPage = new Page<>(pagination.getCurrentPage(), pagination.getPageSize());
@@ -54,21 +54,21 @@ public class TipPostController {
         return Result.ok(map);
     }
 
-    @ApiOperation("通过投稿")
+    @Operation(summary = "通过投稿")
     @GetMapping("/admin/tip/pass/{id}")
     public Result pass(@PathVariable("id") Long id) {
         tipPostService.pass(id);
         return Result.ok();
     }
 
-    @ApiOperation("拒绝投稿")
+    @Operation(summary = "拒绝投稿")
     @GetMapping("/admin/tip/refuse/{id}")
     public Result refuse(@PathVariable("id") Long id) {
         tipPostService.refuse(id);
         return Result.ok();
     }
 
-    @ApiOperation("获取我的每日一句")
+    @Operation(summary = "获取我的每日一句")
     @PostMapping("/my/tip")
     public Result getMyTip(@RequestBody Pagination pagination, HttpServletRequest request) {
         String userId = JwtHelper.getUserId(request.getHeader("Authorization"));
@@ -82,7 +82,7 @@ public class TipPostController {
         return Result.ok(map);
     }
 
-    @ApiOperation("修改每日一句投稿")
+    @Operation(summary = "修改每日一句投稿")
     @PutMapping("/my/tip/update/{id}")
     public Result update(@RequestBody TipPost tipPost, @PathVariable Long id) {
         TipPost tipPost1 = tipPostService.getById(id);

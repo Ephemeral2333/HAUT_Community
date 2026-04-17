@@ -3,13 +3,14 @@ package com.liyh.system.controller;
 import com.liyh.common.result.Result;
 import com.liyh.system.annotation.RateLimit;
 import com.liyh.system.service.FileService;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 /**
@@ -17,7 +18,7 @@ import java.io.IOException;
  * @Description TODO
  * @Date 2023/6/18 15:03
  **/
-@ApiOperation(value = "文件管理", tags = "文件管理")
+@Tag(name = "文件管理")
 @RestController
 @RequestMapping("/front/file")
 @Slf4j

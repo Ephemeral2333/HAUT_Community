@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(find ./docs -type f -name *.md -o -name *.txt)",
-      "Bash(find e:FilesJavaHAUT_Community -name application*.yml -o -name application*.yaml -o -name application*.properties)"
+      "Bash(find e:FilesJavaHAUT_Community -name application*.yml -o -name application*.yaml -o -name application*.properties)",
+      "Bash(powershell -Command ' *)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"migrate-swagger.ps1\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"fix-schema.ps1\")",
+      "Bash(rm fix-schema.ps1)"
     ]
   }
 }

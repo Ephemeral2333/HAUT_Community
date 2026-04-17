@@ -1,42 +1,31 @@
 package com.liyh.system.service.serviceImpl;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Script;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.core.search.TotalHitsRelation;
+import co.elastic.clients.json.JsonData;
 import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liyh.model.entity.Post;
 import com.liyh.model.vo.ai.SearchResultVo;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.liyh.system.config.AiProperties;
 import com.liyh.system.mapper.PostMapper;
 import com.liyh.system.service.AiService;
 import com.liyh.system.service.EsPostService;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.common.text.Text;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.reindex.DeleteByQueryRequest;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.collapse.CollapseBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
-import org.elasticsearch.xcontent.XContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-
-import javax.annotation.PostConstruct;
+import java.io.StringReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,7 +34,7 @@ import java.util.stream.Collectors;
  * <p>
  * 核心改造：
  * 1. 每篇帖子按句子边界切分为多个 chunk，每个 chunk 单独向量化并写入 ES
- * 2. 搜索时通过 CollapseBuilder 按 postId 去重，返回每篇帖子最相关的 chunk
+ * 2. 搜索时通过 collapse 按 postId 去重，返回每篇帖子最相关的 chunk
  * 3. 删除帖子时通过 DeleteByQuery 删除该帖子的所有 chunk
  * <p>
  * 支持 BM25 关键词搜索 + 向量语义搜索 + RRF 混合排序
@@ -71,7 +60,7 @@ public class EsPostServiceImpl implements EsPostService {
     // ==================== 依赖 ====================
 
     @Autowired(required = false)
-    private RestHighLevelClient esClient;
+    private ElasticsearchClient esClient;
 
     @Autowired
     private AiService aiService;
@@ -86,10 +75,9 @@ public class EsPostServiceImpl implements EsPostService {
 
     @Override
     public boolean isAvailable() {
-        if (esClient == null)
-            return false;
+        if (esClient == null) return false;
         try {
-            return esClient.ping(RequestOptions.DEFAULT);
+            return esClient.ping().value();
         } catch (Exception e) {
             return false;
         }
@@ -112,8 +100,7 @@ public class EsPostServiceImpl implements EsPostService {
     @Override
     public void initIndex() {
         try {
-            boolean exists = esClient.indices().exists(
-                    new GetIndexRequest(INDEX_NAME), RequestOptions.DEFAULT);
+            boolean exists = esClient.indices().exists(r -> r.index(INDEX_NAME)).value();
             if (exists) {
                 log.info("ES 索引 {} 已存在，跳过创建", INDEX_NAME);
                 return;
@@ -151,9 +138,7 @@ public class EsPostServiceImpl implements EsPostService {
                     }
                     """.formatted(dims);
 
-            CreateIndexRequest request = new CreateIndexRequest(INDEX_NAME);
-            request.source(mapping, XContentType.JSON);
-            esClient.indices().create(request, RequestOptions.DEFAULT);
+            esClient.indices().create(r -> r.index(INDEX_NAME).withJson(new StringReader(mapping)));
             log.info("ES chunk 索引 {} 创建成功，向量维度: {}", INDEX_NAME, dims);
 
         } catch (Exception e) {
@@ -165,18 +150,15 @@ public class EsPostServiceImpl implements EsPostService {
 
     @Override
     public void indexPost(Post post) {
-        if (!isAvailable())
-            return;
+        if (!isAvailable()) return;
 
         try {
-            // 1. 将帖子内容切分为 chunks
             List<String> chunks = splitIntoChunks(
                     post.getTitle(),
                     post.getContent() != null ? post.getContent() : "");
 
             log.info("帖子 {} 切分为 {} 个 chunk", post.getId(), chunks.size());
 
-            // 2. 准备 tags
             List<String> tagNames = Collections.emptyList();
             if (post.getTags() != null) {
                 tagNames = post.getTags().stream()
@@ -188,7 +170,6 @@ public class EsPostServiceImpl implements EsPostService {
                     ? post.getCreateTime().getTime()
                     : System.currentTimeMillis();
 
-            // 3. 批量向量化（一次 API 调用，降低延迟）
             List<float[]> vectors = null;
             if (aiService.isAvailable()) {
                 List<String> textsToEmbed = chunks.stream()
@@ -196,12 +177,11 @@ public class EsPostServiceImpl implements EsPostService {
                         .collect(Collectors.toList());
                 vectors = aiService.embedBatch(textsToEmbed);
                 if (vectors == null || vectors.isEmpty()) {
-                    log.warn("帖子 {} 的 Embedding 生成失败，该帖子将缺少向量字段，无法被向量搜索召回", post.getId());
+                    log.warn("帖子 {} 的 Embedding 生成失败，该帖子将缺少向量字段", post.getId());
                 }
             }
 
-            // 4. 批量写入 ES（BulkRequest）
-            BulkRequest bulkRequest = new BulkRequest();
+            List<BulkOperation> ops = new ArrayList<>();
             for (int i = 0; i < chunks.size(); i++) {
                 String chunkId = post.getId() + "_" + i;
                 String chunkText = chunks.get(i);
@@ -221,14 +201,14 @@ public class EsPostServiceImpl implements EsPostService {
                     doc.put("chunkVector", toFloatList(vectors.get(i)));
                 }
 
-                bulkRequest.add(new IndexRequest(INDEX_NAME)
-                        .id(chunkId)
-                        .source(JSON.toJSONString(doc), XContentType.JSON));
+                String docJson = JSON.toJSONString(doc);
+                ops.add(BulkOperation.of(b -> b.index(
+                        idx -> idx.index(INDEX_NAME).id(chunkId).withJson(new StringReader(docJson)))));
             }
 
-            BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
-            if (bulkResponse.hasFailures()) {
-                log.warn("帖子 {} 部分 chunk 写入失败: {}", post.getId(), bulkResponse.buildFailureMessage());
+            BulkResponse bulkResponse = esClient.bulk(BulkRequest.of(r -> r.operations(ops)));
+            if (bulkResponse.errors()) {
+                log.warn("帖子 {} 部分 chunk 写入失败", post.getId());
             } else {
                 log.info("帖子 {} 的 {} 个 chunk 写入 ES 成功", post.getId(), chunks.size());
             }
@@ -240,12 +220,11 @@ public class EsPostServiceImpl implements EsPostService {
 
     @Override
     public void deletePost(Long postId) {
-        if (!isAvailable())
-            return;
+        if (!isAvailable()) return;
         try {
-            DeleteByQueryRequest request = new DeleteByQueryRequest(INDEX_NAME);
-            request.setQuery(QueryBuilders.termQuery("postId", postId));
-            esClient.deleteByQuery(request, RequestOptions.DEFAULT);
+            esClient.deleteByQuery(r -> r
+                    .index(INDEX_NAME)
+                    .query(q -> q.term(t -> t.field("postId").value(postId))));
             log.info("从 ES 删除帖子所有 chunk - postId: {}", postId);
         } catch (Exception e) {
             log.error("从 ES 删除帖子失败 - postId: {}", postId, e);
@@ -256,30 +235,26 @@ public class EsPostServiceImpl implements EsPostService {
 
     @Override
     public List<SearchResultVo> searchByKeyword(String keyword, int page, int size) {
-        if (!isAvailable())
-            return Collections.emptyList();
+        if (!isAvailable()) return Collections.emptyList();
 
         try {
-            BoolQueryBuilder query = QueryBuilders.boolQuery()
-                    .must(QueryBuilders.multiMatchQuery(keyword, "postTitle", "chunkText")
-                            .field("postTitle", 3.0f)
-                            .field("chunkText", 1.0f))
-                    // 只检索已发布帖子（status=1）
-                    .filter(QueryBuilders.termQuery("status", 1));
-
-            SearchSourceBuilder source = new SearchSourceBuilder()
-                    .query(query)
+            SearchResponse<Map> response = esClient.search(s -> s
+                    .index(INDEX_NAME)
                     .from(page * size)
                     .size(size)
-                    // 按 postId 去重，每篇帖子只返回最相关的那个 chunk
-                    .collapse(new CollapseBuilder("postId"))
-                    .highlighter(new HighlightBuilder()
-                            .field("postTitle").field("chunkText")
+                    .query(q -> q.bool(b -> b
+                            .must(m -> m.multiMatch(mm -> mm
+                                    .query(keyword)
+                                    .fields("postTitle^3", "chunkText^1")))
+                            .filter(f -> f.term(t -> t.field("status").value(1)))))
+                    .collapse(c -> c.field("postId"))
+                    .highlight(h -> h
                             .preTags("<em>").postTags("</em>")
-                            .fragmentSize(200).numOfFragments(1));
+                            .fragmentSize(200).numberOfFragments(1)
+                            .fields("postTitle", hf -> hf)
+                            .fields("chunkText", hf -> hf)),
+                    Map.class);
 
-            SearchRequest request = new SearchRequest(INDEX_NAME).source(source);
-            SearchResponse response = esClient.search(request, RequestOptions.DEFAULT);
             return parseSearchHits(response);
 
         } catch (Exception e) {
@@ -290,35 +265,30 @@ public class EsPostServiceImpl implements EsPostService {
 
     @Override
     public List<SearchResultVo> searchByVector(String query, int topK) {
-        if (!isAvailable() || !aiService.isAvailable())
-            return Collections.emptyList();
+        if (!isAvailable() || !aiService.isAvailable()) return Collections.emptyList();
 
         try {
             float[] queryVector = aiService.embed(query);
-            if (queryVector == null)
-                return Collections.emptyList();
+            if (queryVector == null) return Collections.emptyList();
 
-            Map<String, Object> params = new HashMap<>();
-            params.put("query_vector", toFloatList(queryVector));
+            Map<String, JsonData> params = Map.of(
+                    "query_vector", JsonData.of(toFloatList(queryVector)));
 
-            Script script = new Script(
-                    ScriptType.INLINE, "painless",
-                    "cosineSimilarity(params.query_vector, 'chunkVector') + 1.0",
-                    params);
+            Query innerFilter = Query.of(q -> q.bool(b -> b
+                    .must(m -> m.exists(e -> e.field("chunkVector")))
+                    .filter(f -> f.term(t -> t.field("status").value(1)))));
 
-            // 只检索存在向量且已发布的 chunk
-            BoolQueryBuilder filter = QueryBuilders.boolQuery()
-                    .must(QueryBuilders.existsQuery("chunkVector"))
-                    .filter(QueryBuilders.termQuery("status", 1));
+            Script script = Script.of(sc -> sc.inline(i -> i
+                    .source("cosineSimilarity(params.query_vector, 'chunkVector') + 1.0")
+                    .params(params)));
 
-            SearchSourceBuilder source = new SearchSourceBuilder()
-                    .query(QueryBuilders.scriptScoreQuery(filter, script))
-                    // 按 postId 去重，返回每篇帖子中得分最高的 chunk
-                    .collapse(new CollapseBuilder("postId"))
-                    .size(topK);
+            SearchResponse<Map> response = esClient.search(s -> s
+                    .index(INDEX_NAME)
+                    .size(topK)
+                    .query(q -> q.scriptScore(ss -> ss.query(innerFilter).script(script)))
+                    .collapse(c -> c.field("postId")),
+                    Map.class);
 
-            SearchRequest request = new SearchRequest(INDEX_NAME).source(source);
-            SearchResponse response = esClient.search(request, RequestOptions.DEFAULT);
             return parseSearchHits(response);
 
         } catch (Exception e) {
@@ -330,7 +300,6 @@ public class EsPostServiceImpl implements EsPostService {
     @Override
     public List<SearchResultVo> hybridSearch(String query, int page, int size) {
         int fetchSize = size * 3;
-
         List<SearchResultVo> bm25Results = searchByKeyword(query, 0, fetchSize);
         List<SearchResultVo> vectorResults = searchByVector(query, fetchSize);
 
@@ -344,12 +313,8 @@ public class EsPostServiceImpl implements EsPostService {
 
     // ==================== RRF 混合排序 ====================
 
-    /**
-     * RRF (Reciprocal Rank Fusion) - score = Σ 1/(k + rank_i), k=60
-     */
-    private List<SearchResultVo> rrfMerge(List<SearchResultVo> listA,
-            List<SearchResultVo> listB,
-            int page, int size) {
+    private List<SearchResultVo> rrfMerge(List<SearchResultVo> listA, List<SearchResultVo> listB,
+                                           int page, int size) {
         final int k = 60;
         Map<Long, Double> scoreMap = new LinkedHashMap<>();
         Map<Long, SearchResultVo> resultMap = new HashMap<>();
@@ -390,8 +355,7 @@ public class EsPostServiceImpl implements EsPostService {
 
         log.info("开始全量 chunk 索引（分页批处理, 每批 {} 条）...", REINDEX_BATCH_SIZE);
 
-        int success = 0;
-        int total = 0;
+        int success = 0, total = 0;
         long currentPage = 1;
 
         while (true) {
@@ -402,7 +366,6 @@ public class EsPostServiceImpl implements EsPostService {
             List<Post> posts = page.getRecords();
 
             if (posts.isEmpty()) break;
-
             total += posts.size();
             for (Post post : posts) {
                 try {
@@ -413,7 +376,6 @@ public class EsPostServiceImpl implements EsPostService {
                 }
             }
             log.info("全量索引进度: 已处理 {}/{}, 成功 {}", total, page.getTotal(), success);
-
             if (currentPage >= page.getPages()) break;
             currentPage++;
         }
@@ -424,60 +386,18 @@ public class EsPostServiceImpl implements EsPostService {
 
     // ==================== 私有工具方法 ====================
 
-    /**
-     * 将帖子切分为 chunk 列表
-     * 策略：按中文句子边界（。！？\n）分割，目标 CHUNK_SIZE 字符/块，CHUNK_OVERLAP 字符重叠
-     * 每个 chunk 均携带标题前缀，以增强向量检索的语义精度
-     */
-    private List<String> splitIntoChunks(String title, String content) {
-        if (content == null || content.isBlank()) {
-            return List.of("【" + title + "】");
-        }
-
-        // 按句子边界分割
-        String[] sentences = content.split("(?<=[。！？!?\\n])");
-
-        List<String> chunks = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        String overlapBuffer = "";
-
-        for (String raw : sentences) {
-            String sentence = raw.trim();
-            if (sentence.isEmpty())
-                continue;
-
-            if (current.length() + sentence.length() > CHUNK_SIZE && current.length() > 0) {
-                // 存储当前 chunk（携带标题前缀）
-                chunks.add("【" + title + "】\n" + current.toString().trim());
-                // 保留尾部 CHUNK_OVERLAP 字符作为下一块开头（保持上下文）
-                String built = current.toString();
-                overlapBuffer = built.length() > CHUNK_OVERLAP
-                        ? built.substring(built.length() - CHUNK_OVERLAP)
-                        : built;
-                current = new StringBuilder(overlapBuffer);
-            }
-            current.append(sentence);
-        }
-
-        // 处理最后一个 chunk
-        if (current.length() > 0) {
-            chunks.add("【" + title + "】\n" + current.toString().trim());
-        }
-
-        return chunks.isEmpty() ? List.of("【" + title + "】\n" + truncate(content, CHUNK_SIZE)) : chunks;
-    }
-
-    private List<SearchResultVo> parseSearchHits(SearchResponse response) {
+    private List<SearchResultVo> parseSearchHits(SearchResponse<Map> response) {
         List<SearchResultVo> results = new ArrayList<>();
-        for (SearchHit hit : response.getHits().getHits()) {
-            Map<String, Object> source = hit.getSourceAsMap();
+        for (Hit<Map> hit : response.hits().hits()) {
+            Map<String, Object> source = hit.source();
+            if (source == null) continue;
 
             SearchResultVo vo = SearchResultVo.builder()
                     .postId(toLong(source.get("postId")))
                     .title((String) source.get("postTitle"))
                     .content(truncate((String) source.get("chunkText"), 300))
                     .userId(toLong(source.get("userId")))
-                    .score(hit.getScore())
+                    .score(hit.score() != null ? hit.score() : 0.0)
                     .build();
 
             if (source.get("tags") instanceof List) {
@@ -489,13 +409,12 @@ public class EsPostServiceImpl implements EsPostService {
                 vo.setCreateTime(new Date(((Number) source.get("createTime")).longValue()));
             }
 
-            // 高亮处理
-            Map<String, HighlightField> highlights = hit.getHighlightFields();
+            Map<String, List<String>> highlights = hit.highlight();
             if (highlights.containsKey("postTitle")) {
-                vo.setHighlightTitle(fragments(highlights.get("postTitle").getFragments()));
+                vo.setHighlightTitle(String.join("", highlights.get("postTitle")));
             }
             if (highlights.containsKey("chunkText")) {
-                vo.setHighlightContent(fragments(highlights.get("chunkText").getFragments()));
+                vo.setHighlightContent(String.join("", highlights.get("chunkText")));
             }
 
             results.add(vo);
@@ -503,38 +422,57 @@ public class EsPostServiceImpl implements EsPostService {
         return results;
     }
 
-    private String fragments(Text[] texts) {
-        if (texts == null || texts.length == 0)
-            return null;
-        StringBuilder sb = new StringBuilder();
-        for (Text t : texts)
-            sb.append(t.string());
-        return sb.toString();
+    private List<String> splitIntoChunks(String title, String content) {
+        if (content == null || content.isBlank()) {
+            return List.of("【" + title + "】");
+        }
+
+        String[] sentences = content.split("(?<=[。！？!?\\n])");
+        List<String> chunks = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        String overlapBuffer = "";
+
+        for (String raw : sentences) {
+            String sentence = raw.trim();
+            if (sentence.isEmpty()) continue;
+
+            if (current.length() + sentence.length() > CHUNK_SIZE && current.length() > 0) {
+                chunks.add("【" + title + "】\n" + current.toString().trim());
+                String built = current.toString();
+                overlapBuffer = built.length() > CHUNK_OVERLAP
+                        ? built.substring(built.length() - CHUNK_OVERLAP)
+                        : built;
+                current = new StringBuilder(overlapBuffer);
+            }
+            current.append(sentence);
+        }
+
+        if (current.length() > 0) {
+            chunks.add("【" + title + "】\n" + current.toString().trim());
+        }
+
+        return chunks.isEmpty() ? List.of("【" + title + "】\n" + truncate(content, CHUNK_SIZE)) : chunks;
     }
 
     private <T> List<T> paginate(List<T> list, int page, int size) {
         int from = page * size;
-        if (from >= list.size())
-            return Collections.emptyList();
+        if (from >= list.size()) return Collections.emptyList();
         return list.subList(from, Math.min(from + size, list.size()));
     }
 
     private Long toLong(Object obj) {
-        if (obj == null)
-            return null;
+        if (obj == null) return null;
         return Long.parseLong(obj.toString());
     }
 
     private String truncate(String text, int maxLen) {
-        if (text == null)
-            return "";
+        if (text == null) return "";
         return text.length() <= maxLen ? text : text.substring(0, maxLen) + "...";
     }
 
     private List<Float> toFloatList(float[] arr) {
         List<Float> list = new ArrayList<>(arr.length);
-        for (float f : arr)
-            list.add(f);
+        for (float f : arr) list.add(f);
         return list;
     }
 }

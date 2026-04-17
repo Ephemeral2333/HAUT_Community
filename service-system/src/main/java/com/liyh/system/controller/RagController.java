@@ -6,19 +6,19 @@ import com.liyh.model.vo.ai.RagResponse;
 import com.liyh.system.config.AiProperties;
 import com.liyh.system.service.RagService;
 import com.liyh.system.utils.RedisUtil;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@Api(tags = "智能问答")
+@Tag(name = "智能问答")
 @RestController
 @RequestMapping("/front/rag")
 @Slf4j
@@ -35,7 +35,7 @@ public class RagController {
 
     private static final String RATE_LIMIT_KEY_PREFIX = "rag:rate:";
 
-    @ApiOperation("智能问答 - 基于社区帖子内容回答用户问题")
+    @Operation(summary = "智能问答 - 基于社区帖子内容回答用户问题")
     @PostMapping("/ask")
     public Result<?> ask(@Validated @RequestBody RagAskRequest request,
                          HttpServletRequest httpRequest) {
@@ -52,7 +52,7 @@ public class RagController {
         return Result.ok(response);
     }
 
-    @ApiOperation("智能问答（流式） - SSE 逐字输出回答")
+    @Operation(summary = "智能问答（流式） - SSE 逐字输出回答")
     @GetMapping("/ask/stream")
     public SseEmitter askStream(@RequestParam String question,
                                 @RequestParam(defaultValue = "5") Integer topK,
@@ -80,7 +80,7 @@ public class RagController {
         return emitter;
     }
 
-    @ApiOperation("检查智能问答服务状态")
+    @Operation(summary = "检查智能问答服务状态")
     @GetMapping("/status")
     public Result<Map<String, Boolean>> status() {
         return Result.ok(Map.of("available", ragService.isAvailable()));

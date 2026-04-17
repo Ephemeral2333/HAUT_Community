@@ -1,11 +1,13 @@
 package com.liyh.common.utils;
 
+import java.util.Base64;
+
 public class DatatypeConverter {
      public static String printBase64Binary(byte[] input) {
-         return javax.xml.bind.DatatypeConverter.printBase64Binary(input);
+         return Base64.getEncoder().encodeToString(input);
      }
 
      public static byte[] parseBase64Binary(String input) {
-         return javax.xml.bind.DatatypeConverter.parseBase64Binary(input);
+         return Base64.getDecoder().decode(input);
      }
 }

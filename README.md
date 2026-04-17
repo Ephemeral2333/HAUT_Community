@@ -1,5 +1,7 @@
 # Gathering Circle (校园社交与智能问答平台)
 
+> 说明：项目暂未完成，当前仍在持续开发中。
+
 ![SpringBoot](https://img.shields.io/badge/SpringBoot-2.7.x-green.svg) ![MyBatis-Plus](https://img.shields.io/badge/MyBatis--Plus-3.4.x-blue.svg) ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange.svg) ![Redis](https://img.shields.io/badge/Redis-6.x-red.svg) ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.x-ff69b4.svg) ![ElasticSearch](https://img.shields.io/badge/ElasticSearch-7.x-yellowgreen.svg) ![AI](https://img.shields.io/badge/AI-DeepSeek%20%7C%20DashScope-blueviolet.svg)
 
 ## 📖 项目简介

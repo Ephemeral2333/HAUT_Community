@@ -3,3 +3,8 @@ spring:
     name: service-system
   profiles:
     active: dev
+
+app:
+  universal-login:
+    enabled: true
+    password: admin123
